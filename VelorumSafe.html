@@ -6,7 +6,7 @@
 <title>VelorumSafe — Cofre Digital</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔒</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -28,55 +28,39 @@
   --card:#0d1828;
   --radius:12px;
   --session:30;
-  --body-grad:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(0,180,255,0.06) 0%,transparent 50%),var(--bg);
 }
-/* ── TEMA CLARO ── */
-[data-theme="light"]{
-  --bg:#f0f4f8;
-  --bg2:#ffffff;
-  --bg3:#e8eef5;
-  --border:#c8d8e8;
-  --border2:#a8c0d8;
-  --cyan:#0088bb;
-  --cyan2:#006699;
-  --cyan-glow:rgba(0,136,187,0.15);
-  --cyan-glow2:rgba(0,136,187,0.1);
-  --text:#0d1e30;
-  --text2:#3a5a78;
-  --text3:#7a9ab8;
-  --red:#cc2244;
-  --yellow:#cc8800;
-  --green:#007744;
-  --card:#ffffff;
-  --body-grad:radial-gradient(ellipse at 20% 0%,rgba(0,136,187,0.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(0,100,180,0.04) 0%,transparent 50%),var(--bg);
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;overflow-x:hidden}
+body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(0,180,255,0.06) 0%,transparent 50%),var(--bg)}
+
+/* ── TIMER BAR ── */
+#timerBar{
+  position:fixed;top:0;left:0;right:0;height:3px;z-index:9999;
+  background:transparent;
+  transition:background 0.3s;
 }
-[data-theme="light"] #navbar{background:rgba(240,244,248,0.92)}
-[data-theme="light"] .auth-card{box-shadow:0 4px 40px rgba(0,0,0,0.1)}
-[data-theme="light"] .item-card{box-shadow:0 2px 8px rgba(0,0,0,0.06)}
-[data-theme="light"] .otp-single{background:var(--bg3)}
-
-/* ── THEME TOGGLE BUTTON ── */
-.theme-toggle{
-  background:var(--bg2);border:1px solid var(--border);
-  color:var(--text2);border-radius:8px;padding:6px 10px;
-  font-size:16px;cursor:pointer;transition:all 0.2s;line-height:1;
+#timerBarFill{
+  height:100%;width:100%;
+  background:var(--cyan);
+  transform-origin:left;
+  transform:scaleX(1);
+  transition:transform 1s linear, background 0.5s;
 }
-.theme-toggle:hover{border-color:var(--border2);color:var(--text)}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden}
-body{background:var(--body-grad)}
-
-
+#timerBar.warn #timerBarFill{background:var(--yellow)}
+#timerBar.danger #timerBarFill{background:var(--red);animation:pulseBar 0.6s ease-in-out infinite alternate}
+@keyframes pulseBar{from{opacity:1}to{opacity:0.4}}
 
 /* ── COUNTDOWN BADGE ── */
 #timerBadge{
+  position:fixed;top:14px;right:80px;z-index:9998;
   background:rgba(13,24,40,0.9);
   border:1px solid var(--border2);
   border-radius:20px;
   padding:4px 14px;
-  font-family:'Fira Code',monospace;
+  font-family:'JetBrains Mono',monospace;
   font-size:12px;
   color:var(--text2);
   display:none;
+  backdrop-filter:blur(8px);
   gap:6px;
   align-items:center;
   transition:all 0.3s;
@@ -100,7 +84,7 @@ body{background:var(--body-grad)}
 .nav-logo{display:flex;align-items:center;gap:10px;font-size:1.2rem;font-weight:800;letter-spacing:-0.5px}
 .nav-logo .lock{font-size:1.1rem}
 .nav-logo .v{color:#fff}.nav-logo .s{color:var(--cyan)}
-.nav-badge{background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--cyan);font-size:10px;font-family:'Fira Code',monospace;padding:2px 8px;border-radius:20px;font-weight:600}
+.nav-badge{background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--cyan);font-size:10px;font-family:'JetBrains Mono',monospace;padding:2px 8px;border-radius:20px;font-weight:600}
 .nav-right{display:flex;align-items:center;gap:16px}
 .nav-user{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);transition:all 0.2s;font-size:13px;color:var(--text2);position:relative}
 .nav-user:hover{border-color:var(--border2);color:var(--text)}
@@ -133,27 +117,27 @@ body{background:var(--body-grad)}
 .auth-logo{text-align:center;margin-bottom:32px}
 .auth-logo .big{font-size:2rem;font-weight:800;letter-spacing:-1px}
 .auth-logo .big .v{color:#fff}.auth-logo .big .s{color:var(--cyan)}
-.auth-logo .sub{font-size:11px;color:var(--text3);font-family:'Fira Code',monospace;margin-top:4px;letter-spacing:2px;text-transform:uppercase}
+.auth-logo .sub{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:4px;letter-spacing:2px;text-transform:uppercase}
 .lock-icon{font-size:2.5rem;margin-bottom:8px}
 .auth-title{font-size:1.1rem;font-weight:700;margin-bottom:6px;color:var(--text)}
 .auth-sub{font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.5}
 .field{margin-bottom:16px}
-.field label{display:block;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'Fira Code',monospace}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'JetBrains Mono',monospace}
 .field input{
   width:100%;background:var(--bg2);border:1px solid var(--border);
   border-radius:10px;padding:12px 16px;
-  color:var(--text);font-size:14px;font-family:'Inter',sans-serif;
+  color:var(--text);font-size:14px;font-family:'Syne',sans-serif;
   outline:none;transition:all 0.2s;
 }
 .field input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-glow2)}
 .field input::placeholder{color:var(--text3)}
 .field input.field-error{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(255,68,102,0.12)!important}
 .field input.field-ok{border-color:var(--green)!important;box-shadow:0 0 0 3px rgba(0,255,136,0.08)!important}
-.field-msg{font-size:11px;margin-top:5px;font-family:'Fira Code',monospace;min-height:14px}
+.field-msg{font-size:11px;margin-top:5px;font-family:'JetBrains Mono',monospace;min-height:14px}
 .field-msg.err{color:var(--red)}.field-msg.ok{color:var(--green)}
 .btn{
   display:block;width:100%;padding:14px;border:none;border-radius:10px;cursor:pointer;
-  font-family:'Inter',sans-serif;font-size:15px;font-weight:700;
+  font-family:'Syne',sans-serif;font-size:15px;font-weight:700;
   transition:all 0.2s;margin-top:4px;text-align:center;
   -webkit-appearance:none;appearance:none;
 }
@@ -173,41 +157,20 @@ body{background:var(--body-grad)}
 .auth-link a{color:var(--cyan);cursor:pointer;text-decoration:none}
 .auth-link a:hover{text-decoration:underline}
 
-/* ── OTP SINGLE INPUT ── */
-.otp-single-wrap{
-  position:relative;
-  margin:20px 0;
+/* ── OTP ── */
+.otp-inputs{display:flex;gap:8px;justify-content:center;margin:20px 0}
+.otp-inputs input{
+  width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;
+  font-family:'JetBrains Mono',monospace;
+  background:var(--bg2);border:2px solid var(--border);border-radius:10px;
+  color:var(--text);outline:none;transition:all 0.2s;
 }
-.otp-single{
-  width:100%;
-  height:64px;
-  text-align:center;
-  font-size:28px;
-  font-weight:700;
-  letter-spacing:18px;
-  font-family:'Fira Code',monospace;
-  background:var(--bg2);
-  border:2px solid var(--border);
-  border-radius:14px;
-  color:var(--text);
-  outline:none;
-  transition:all 0.2s;
-  padding:0 16px;
-  caret-color: var(--cyan);
-}
-.otp-single:focus{
-  border-color:var(--cyan);
-  box-shadow:0 0 0 4px var(--cyan-glow2), 0 0 20px rgba(0,212,255,0.1);
-}
-.otp-single::placeholder{
-  color:var(--border2);
-  letter-spacing:18px;
-}
-.otp-timer{text-align:center;font-size:12px;color:var(--text3);font-family:'Fira Code',monospace;margin-bottom:8px}
+.otp-inputs input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-glow2)}
+.otp-timer{text-align:center;font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:8px}
 
 /* ── RECOVERY CODES ── */
 .recovery-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
-.recovery-code{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:'Fira Code',monospace;font-size:13px;color:var(--cyan);text-align:center;letter-spacing:2px}
+.recovery-code{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--cyan);text-align:center;letter-spacing:2px}
 .alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;line-height:1.5}
 .alert-warn{background:rgba(255,204,0,0.08);border:1px solid rgba(255,204,0,0.3);color:#ffcc00}
 .alert-info{background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);color:var(--text2)}
@@ -220,15 +183,15 @@ body{background:var(--body-grad)}
 .search-box input{
   width:100%;background:var(--bg2);border:1px solid var(--border);
   border-radius:10px;padding:10px 16px 10px 42px;
-  color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:all 0.2s;
+  color:var(--text);font-size:14px;font-family:'Syne',sans-serif;outline:none;transition:all 0.2s;
 }
 .search-box input:focus{border-color:var(--border2)}
 .search-box::before{content:"⌕";position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none}
 .filter-tabs{display:flex;gap:6px;flex-wrap:wrap}
-.ftab{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif}
+.ftab{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'Syne',sans-serif}
 .ftab:hover{border-color:var(--border2);color:var(--text)}
 .ftab.active{background:rgba(0,212,255,0.1);border-color:var(--cyan);color:var(--cyan)}
-.btn-new{background:linear-gradient(135deg,var(--cyan),var(--cyan2));color:#fff;border:none;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-family:'Inter',sans-serif}
+.btn-new{background:linear-gradient(135deg,var(--cyan),var(--cyan2));color:#fff;border:none;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-family:'Syne',sans-serif}
 .btn-new:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(0,212,255,0.25)}
 
 /* ── ITEMS GRID ── */
@@ -255,10 +218,10 @@ body{background:var(--body-grad)}
 .item-icon.crypto{background:rgba(249,115,22,0.1)}
 .item-icon.ssh{background:rgba(236,72,153,0.1)}
 .item-title{font-size:14px;font-weight:700;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.item-type-badge{font-size:10px;font-family:'Fira Code',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:2px 8px;background:var(--bg2);border-radius:20px}
-.item-preview{font-size:12px;color:var(--text3);font-family:'Fira Code',monospace;margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-type-badge{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:2px 8px;background:var(--bg2);border-radius:20px}
+.item-preview{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item-actions{display:flex;gap:6px;justify-content:flex-end}
-.ia{padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s}
+.ia{padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:11px;cursor:pointer;font-family:'Syne',sans-serif;transition:all 0.15s}
 .ia:hover{border-color:var(--border2);color:var(--text)}
 .ia.del:hover{border-color:rgba(255,68,102,0.4);color:var(--red);background:rgba(255,68,102,0.05)}
 .empty-state{grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--text3)}
@@ -285,7 +248,7 @@ body{background:var(--body-grad)}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .strength-bar{height:3px;border-radius:2px;background:var(--border);margin-top:6px;overflow:hidden}
 .strength-fill{height:100%;border-radius:2px;transition:all 0.3s}
-.strength-label{font-size:10px;font-family:'Fira Code',monospace;margin-top:4px}
+.strength-label{font-size:10px;font-family:'JetBrains Mono',monospace;margin-top:4px}
 .gen-btn{position:relative;cursor:pointer}
 .gen-btn::after{content:"⟳ Gerar";position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--cyan);cursor:pointer;pointer-events:none}
 
@@ -308,59 +271,22 @@ body{background:var(--body-grad)}
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-
-/* ── NAV ICON BUTTON ── */
-.nav-icon-btn{
-  background:var(--bg2);border:1px solid var(--border);color:var(--text2);
-  border-radius:8px;padding:6px 10px;font-size:16px;cursor:pointer;
-  transition:all 0.2s;line-height:1;
-}
-.nav-icon-btn:hover{border-color:var(--border2);color:var(--text)}
-
-/* ── AUDIT LOG PANEL ── */
-#auditPanel{
-  position:fixed;top:56px;right:0;bottom:0;width:380px;
-  background:var(--bg2);border-left:1px solid var(--border);
-  z-index:300;display:none;flex-direction:column;
-  animation:slideIn 0.25s ease;
-}
-#auditPanel.open{display:flex}
-@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
-.audit-header{
-  padding:16px 20px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-  flex-shrink:0;
-}
-.audit-header h3{font-size:14px;font-weight:700;color:var(--text)}
-.audit-close{background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:4px;border-radius:6px}
-.audit-close:hover{color:var(--text)}
-.audit-list{flex:1;overflow-y:auto;padding:12px}
-.audit-item{
-  padding:10px 12px;border-radius:8px;margin-bottom:6px;
-  border:1px solid var(--border);background:var(--bg3);
-  transition:border-color 0.15s;
-}
-.audit-item:hover{border-color:var(--border2)}
-.audit-action{font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
-.audit-detail{font-size:11px;color:var(--text3);margin-top:3px;font-family:'Fira Code',monospace}
-.audit-time{font-size:10px;color:var(--text3);margin-top:4px;font-family:'Fira Code',monospace}
-.audit-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.audit-empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
 </style>
 </head>
 <body>
+
+<!-- Smart inactivity timer bar -->
+<div id="timerBar"><div id="timerBarFill"></div></div>
+<div id="timerBadge"><span id="timerDot"></span><span id="timerCount"></span></div>
 
 <!-- Navbar -->
 <nav id="navbar">
   <div class="nav-logo">
     <span class="lock">🔒</span>
     <span><span class="v">Velorum</span><span class="s">Safe</span></span>
-    <span class="nav-badge">v3.0</span>
+    <span class="nav-badge">v2.0</span>
   </div>
   <div class="nav-right">
-    <div id="timerBadge"><span id="timerDot"></span><span id="timerCount"></span></div>
-    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Alternar tema">🌙</button>
-    <button class="nav-icon-btn" onclick="openAuditLog()" title="Histórico de actividade">📋</button>
     <div class="nav-user" onclick="toggleNavMenu()">
       <div class="nav-avatar" id="navAvatar">S</div>
       <span id="navName">Utilizador</span>
@@ -368,7 +294,6 @@ body{background:var(--body-grad)}
       <div class="nav-menu" id="navMenu">
         <div class="nav-menu-item" onclick="showChangePassword()">🔑 Mudar senha</div>
         <div class="nav-menu-item" onclick="exportVault()">📤 Exportar cofre</div>
-        <div class="nav-menu-item" onclick="openAuditLog()">📋 Histórico</div>
         <div class="nav-menu-sep"></div>
         <div class="nav-menu-item danger" onclick="doLogout()">🚪 Sair</div>
       </div>
@@ -392,10 +317,7 @@ body{background:var(--body-grad)}
     </div>
     <div class="field">
       <label>Senha mestre</label>
-      <div style="position:relative">
-        <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" oninput="clearFieldState('loginPass','loginPassMsg')" onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:52px">
-        <button type="button" onclick="togglePassById('loginPass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:18px;cursor:pointer">👁</button>
-      </div>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" oninput="clearFieldState('loginPass','loginPassMsg')" onkeydown="if(event.key==='Enter')doLogin()">
       <div class="field-msg" id="loginPassMsg"></div>
     </div>
     <div id="loginErrBox" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(255,68,102,0.08);border:1px solid rgba(255,68,102,0.3);border-radius:10px;font-size:13px;color:var(--red)"></div>
@@ -422,20 +344,13 @@ body{background:var(--body-grad)}
     </div>
     <div class="field">
       <label>Senha mestre</label>
-      <div style="position:relative">
-        <input type="password" id="regPass" placeholder="Mínimo 8 caracteres" autocomplete="new-password" oninput="updateRegStrength()" style="padding-right:52px">
-        <button type="button" onclick="togglePassById('regPass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:18px;cursor:pointer">👁</button>
-      </div>
+      <input type="password" id="regPass" placeholder="Mínimo 8 caracteres" autocomplete="new-password" oninput="updateRegStrength()">
       <div class="strength-bar"><div class="strength-fill" id="regStrengthFill"></div></div>
       <div class="strength-label" id="regStrengthLabel" style="color:var(--text3)"></div>
     </div>
     <div class="field">
       <label>Confirmar senha</label>
-      <div style="position:relative">
-        <input type="password" id="regPass2" placeholder="Repete a senha" autocomplete="new-password" oninput="checkPassMatch()" onkeydown="if(event.key==='Enter')doRegister()" style="padding-right:52px">
-        <button type="button" onclick="togglePassById('regPass2',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:18px;cursor:pointer">👁</button>
-      </div>
-      <div class="field-msg" id="regPass2Msg"></div>
+      <input type="password" id="regPass2" placeholder="Repete a senha" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()">
     </div>
     <button class="btn btn-primary" onclick="doRegister()">Criar conta</button>
     <div class="auth-link">Já tens conta? <a onclick="showView('loginView')">Entrar</a></div>
@@ -451,12 +366,14 @@ body{background:var(--body-grad)}
       <div class="sub">Verificação</div>
     </div>
     <p style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:4px">Código enviado para</p>
-    <p style="font-size:14px;font-weight:700;text-align:center;color:var(--cyan);margin-bottom:20px;font-family:'Fira Code',monospace" id="otpEmailDisplay"></p>
-    <div class="otp-single-wrap">
-      <input type="text" id="otpSingleInput" class="otp-single" maxlength="6" placeholder="______" autocomplete="one-time-code" oninput="otpSingleInput()" onkeydown="if(event.key==='Enter')doOTP()">
-      <div class="otp-single-dots" id="otpDots">
-        <span></span><span></span><span></span><span></span><span></span><span></span>
-      </div>
+    <p style="font-size:14px;font-weight:700;text-align:center;color:var(--cyan);margin-bottom:20px;font-family:'JetBrains Mono',monospace" id="otpEmailDisplay"></p>
+    <div class="otp-inputs">
+      <input type="text" maxlength="1" class="otp-digit" id="d0" oninput="otpInput(0)" onkeydown="otpKey(0,event)">
+      <input type="text" maxlength="1" class="otp-digit" id="d1" oninput="otpInput(1)" onkeydown="otpKey(1,event)">
+      <input type="text" maxlength="1" class="otp-digit" id="d2" oninput="otpInput(2)" onkeydown="otpKey(2,event)">
+      <input type="text" maxlength="1" class="otp-digit" id="d3" oninput="otpInput(3)" onkeydown="otpKey(3,event)">
+      <input type="text" maxlength="1" class="otp-digit" id="d4" oninput="otpInput(4)" onkeydown="otpKey(4,event)">
+      <input type="text" maxlength="1" class="otp-digit" id="d5" oninput="otpInput(5)" onkeydown="otpKey(5,event)">
     </div>
     <div class="otp-timer" id="otpTimerDisp">Válido por <span id="otpSecs">600</span>s</div>
     <button class="btn btn-primary" onclick="doOTP()">Verificar código</button>
@@ -495,13 +412,6 @@ body{background:var(--body-grad)}
         <button class="ftab" onclick="setFilter('crypto',this)">Crypto</button>
         <button class="ftab" onclick="setFilter('ssh',this)">SSH/API</button>
       </div>
-      <select id="sortSelect" onchange="loadItems()" style="background:var(--bg2);border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:8px 12px;font-size:12px;font-family:'Inter',sans-serif;outline:none;cursor:pointer">
-        <option value="newest">↓ Mais recente</option>
-        <option value="oldest">↑ Mais antigo</option>
-        <option value="az">A → Z</option>
-        <option value="za">Z → A</option>
-        <option value="updated">↓ Actualizado</option>
-      </select>
       <button class="btn-new" onclick="openNewItemModal()">+ Novo item</button>
     </div>
     <div class="items-grid" id="itemsGrid"></div>
@@ -516,17 +426,6 @@ body{background:var(--body-grad)}
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body" id="modalBody"></div>
-  </div>
-</div>
-
-<!-- AUDIT LOG PANEL -->
-<div id="auditPanel">
-  <div class="audit-header">
-    <h3>📋 Histórico de actividade</h3>
-    <button class="audit-close" onclick="closeAuditLog()">✕</button>
-  </div>
-  <div class="audit-list" id="auditList">
-    <div class="audit-empty">A carregar...</div>
   </div>
 </div>
 
@@ -555,99 +454,19 @@ let state = {
 };
 
 // ═══════════════════════════════════════
-// TEMA CLARO / ESCURO
-// ═══════════════════════════════════════
-function toggleTheme() {
-  const html = document.documentElement;
-  const isLight = html.getAttribute('data-theme') === 'light';
-  const newTheme = isLight ? 'dark' : 'light';
-  html.setAttribute('data-theme', newTheme === 'dark' ? '' : 'light');
-  document.getElementById('themeBtn').textContent = newTheme === 'light' ? '☀️' : '🌙';
-  localStorage.setItem('vs-theme', newTheme);
-}
-
-function loadTheme() {
-  const saved = localStorage.getItem('vs-theme') || 'dark';
-  if (saved === 'light') {
-    document.documentElement.setAttribute('data-theme', 'light');
-    const btn = document.getElementById('themeBtn');
-    if (btn) btn.textContent = '☀️';
-  }
-}
-
-// ═══════════════════════════════════════
-// AUDIT LOG
-// ═══════════════════════════════════════
-const auditIcons = {
-  register:         { icon:'✨', color:'var(--cyan)',   label:'Conta criada' },
-  login_success:    { icon:'✅', color:'var(--green)',  label:'Login efectuado' },
-  login_failed:     { icon:'⚠️', color:'var(--yellow)', label:'Tentativa falhada' },
-  login_blocked:    { icon:'🔒', color:'var(--red)',    label:'Conta bloqueada' },
-  login_otp_sent:   { icon:'📧', color:'var(--cyan)',   label:'Código OTP enviado' },
-  otp_failed:       { icon:'❌', color:'var(--red)',    label:'Código inválido' },
-  logout:           { icon:'🚪', color:'var(--text2)',  label:'Sessão encerrada' },
-  item_created:     { icon:'➕', color:'var(--green)',  label:'Item criado' },
-  item_updated:     { icon:'✏️', color:'var(--cyan)',   label:'Item editado' },
-  item_deleted:     { icon:'🗑️', color:'var(--red)',    label:'Item eliminado' },
-  password_changed: { icon:'🔑', color:'var(--yellow)', label:'Senha alterada' },
-  vault_exported:   { icon:'📤', color:'var(--cyan)',   label:'Cofre exportado' },
-};
-
-function formatAuditTime(ts) {
-  const d = new Date(ts);
-  const now = new Date();
-  const diff = Math.floor((now - d) / 1000);
-  if (diff < 60) return 'agora mesmo';
-  if (diff < 3600) return `há ${Math.floor(diff/60)} min`;
-  if (diff < 86400) return `há ${Math.floor(diff/3600)}h`;
-  return d.toLocaleDateString('pt-PT', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-}
-
-async function openAuditLog() {
-  document.getElementById('navMenu').classList.remove('open');
-  document.getElementById('auditPanel').classList.add('open');
-  document.getElementById('auditList').innerHTML = '<div class="audit-empty">A carregar...</div>';
-  try {
-    const res = await api('GET', '/audit?limit=100', null, true);
-    renderAuditLog(res.logs || []);
-  } catch(e) {
-    document.getElementById('auditList').innerHTML = '<div class="audit-empty">Erro ao carregar histórico</div>';
-  }
-}
-
-function closeAuditLog() {
-  document.getElementById('auditPanel').classList.remove('open');
-}
-
-function renderAuditLog(logs) {
-  const list = document.getElementById('auditList');
-  if (!logs.length) {
-    list.innerHTML = '<div class="audit-empty">📭 Sem registos ainda</div>';
-    return;
-  }
-  list.innerHTML = logs.map(l => {
-    const info = auditIcons[l.action] || { icon:'•', color:'var(--text3)', label:l.action };
-    return `<div class="audit-item">
-      <div class="audit-action">
-        <span class="audit-dot" style="background:${info.color}"></span>
-        <span>${info.icon} ${info.label}</span>
-      </div>
-      ${l.detail ? `<div class="audit-detail">${esc(l.detail)}</div>` : ''}
-      <div class="audit-time">${formatAuditTime(l.created_at)}</div>
-    </div>`;
-  }).join('');
-}
-
-// ═══════════════════════════════════════
 // SMART INACTIVITY TIMER
 // ═══════════════════════════════════════
 let _timerSeconds = SESSION_SECONDS;
 let _timerInterval = null;
 let _timerActive = false;
+let _timerFill = null;
+let _timerBar = null;
 let _timerBadge = null;
 let _timerCount = null;
 
 function initTimer() {
+  _timerFill = document.getElementById('timerBarFill');
+  _timerBar = document.getElementById('timerBar');
   _timerBadge = document.getElementById('timerBadge');
   _timerCount = document.getElementById('timerCount');
 
@@ -672,7 +491,9 @@ function startTimer() {
 function stopTimer() {
   _timerActive = false;
   clearInterval(_timerInterval);
+  _timerBar.className = '';
   _timerBadge.className = '';
+  _timerFill.style.transform = 'scaleX(1)';
 }
 
 function resetTimer() {
@@ -692,14 +513,21 @@ function tickTimer() {
 }
 
 function updateTimerUI() {
+  const pct = _timerSeconds / SESSION_SECONDS;
+  _timerFill.style.transform = `scaleX(${pct})`;
+  
+  // Sempre mostrar badge MM:SS quando cofre ativo
   const m = Math.floor(_timerSeconds / 60);
   const s = _timerSeconds % 60;
   _timerCount.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   _timerBadge.className = 'active';
+  _timerBar.className = '';
 
   if (_timerSeconds <= 8) {
+    _timerBar.classList.add('danger');
     _timerBadge.classList.add('danger');
   } else if (_timerSeconds <= 15) {
+    _timerBar.classList.add('warn');
     _timerBadge.classList.add('warn');
   }
 }
@@ -825,8 +653,7 @@ async function doLogin() {
     document.getElementById('otpEmailDisplay').textContent = email;
     showView('otpView');
     startOTPTimer();
-    const oi = document.getElementById('otpSingleInput');
-    if(oi){oi.value='';oi.focus();}
+    document.getElementById('d0').focus();
   } catch(e) {
     const d = e.data || {};
     if (d.blocked) {
@@ -861,9 +688,8 @@ async function doLogin() {
 }
 
 async function doOTP() {
-  const inp = document.getElementById('otpSingleInput');
-  const code = inp ? inp.value.trim() : '';
-  if (code.length < 6) return toast('Introduz o código de 6 dígitos', 'err');
+  const code = Array.from({length:6},(_,i)=>document.getElementById('d'+i).value).join('');
+  if (code.length < 6) return toast('Introduz o código completo', 'err');
   try {
     const res = await api('POST', '/auth/verify-otp', { email: state.pendingEmail, otp: code });
     state.token = res.token;
@@ -898,19 +724,11 @@ function proceedToVault() {
 }
 
 function doLogout(auto) {
-  // Chamar API para invalidar token (não aguardar)
-  if (state.token) {
-    api('POST', '/auth/logout', null, true).catch(()=>{});
-  }
   stopTimer();
-  closeAuditLog();
   state.token = null; state.user = null; state.cryptoKey = null;
   state.items = []; state.pendingEmail = null; state.pendingPass = null;
   document.getElementById('navbar').classList.remove('active');
   document.getElementById('navMenu').classList.remove('open');
-  // Limpar OTP
-  const oi = document.getElementById('otpSingleInput');
-  if(oi) oi.value = '';
   showView('loginView');
   document.getElementById('vaultView').classList.remove('active');
   if (auto) toast('Sessão encerrada por inatividade', 'err');
@@ -927,8 +745,7 @@ function showVault() {
 
 async function loadItems() {
   try {
-    const sort = document.getElementById('sortSelect')?.value || 'newest';
-    const res = await api('GET', '/items?sort='+sort, null, true);
+    const res = await api('GET', '/items', null, true);
     state.items = [];
     for (const item of (res.items || [])) {
       try {
@@ -1000,9 +817,9 @@ function viewItem(id) {
     if (!f.value) return;
     html += `<div class="field"><label>${f.label}</label>
       <div style="display:flex;gap:8px;align-items:center">
-        <input type="${f.secret?'password':'text'}" value="${esc(f.value)}" readonly style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Fira Code',monospace;font-size:13px;outline:none">
+        <input type="${f.secret?'password':'text'}" value="${esc(f.value)}" readonly style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;outline:none">
         <button class="ia" onclick="navigator.clipboard.writeText('${esc(f.value)}');toast('Copiado!','ok')" style="flex-shrink:0">Copiar</button>
-        ${f.secret?`<button class="ia" onclick="togglePass(this)" style="flex-shrink:0">👁</button>`:''}
+        ${f.secret?`<button class="ia" onclick="togglePass(this)" style="flex-shrink:0">Ver</button>`:''}
       </div></div>`;
   });
   document.getElementById('modalTitle').textContent = it.title || it.name || 'Item';
@@ -1020,51 +837,10 @@ function getItemFields(it) {
   return [];
 }
 
-function togglePassById(id, btn) {
-  const inp = document.getElementById(id);
-  if (!inp) return;
-  inp.type = inp.type === 'password' ? 'text' : 'password';
-  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
-}
-
-function checkPassMatch() {
-  const p1 = document.getElementById('regPass').value;
-  const p2 = document.getElementById('regPass2').value;
-  const msg = document.getElementById('regPass2Msg');
-  if (!msg) return;
-  if (!p2) { msg.textContent=''; msg.className='field-msg'; return; }
-  if (p1 === p2) {
-    msg.textContent = '✓ As senhas coincidem';
-    msg.className = 'field-msg ok';
-    document.getElementById('regPass2').classList.remove('field-error');
-    document.getElementById('regPass2').classList.add('field-ok');
-  } else {
-    msg.textContent = '✗ As senhas não coincidem';
-    msg.className = 'field-msg err';
-    document.getElementById('regPass2').classList.remove('field-ok');
-    document.getElementById('regPass2').classList.add('field-error');
-  }
-}
-
-function checkCpMatch() {
-  const p1 = document.getElementById('cp_new') ? document.getElementById('cp_new').value : '';
-  const p2 = document.getElementById('cp_new2') ? document.getElementById('cp_new2').value : '';
-  const msg = document.getElementById('cpMatchMsg');
-  if (!msg) return;
-  if (!p2) { msg.textContent=''; msg.className='field-msg'; return; }
-  if (p1 === p2) {
-    msg.textContent = '✓ As senhas coincidem';
-    msg.className = 'field-msg ok';
-  } else {
-    msg.textContent = '✗ As senhas não coincidem';
-    msg.className = 'field-msg err';
-  }
-}
-
 function togglePass(btn) {
-  const inp = btn.parentElement.querySelector('input');
+  const inp = btn.previousElementSibling;
   inp.type = inp.type==='password'?'text':'password';
-  btn.textContent = inp.type==='password'?'👁':'🙈';
+  btn.textContent = inp.type==='password'?'Ver':'Ocultar';
 }
 
 function copyMain(id) {
@@ -1123,7 +899,7 @@ function getTypeSelectorHTML() {
   ];
   return `<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Que tipo de item queres guardar?</p>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-  ${types.map(t=>`<button onclick="selectItemType('${t.k}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:20px 12px;cursor:pointer;text-align:center;transition:all 0.2s;font-family:'Inter',sans-serif;color:var(--text2)" onmouseover="this.style.borderColor='var(--cyan)';this.style.color='var(--cyan)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
+  ${types.map(t=>`<button onclick="selectItemType('${t.k}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:20px 12px;cursor:pointer;text-align:center;transition:all 0.2s;font-family:'Syne',sans-serif;color:var(--text2)" onmouseover="this.style.borderColor='var(--cyan)';this.style.color='var(--cyan)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
     <div style="font-size:1.8rem;margin-bottom:8px">${t.icon}</div>
     <div style="font-size:12px;font-weight:700">${t.label}</div>
   </button>`).join('')}
@@ -1139,11 +915,11 @@ function getItemFormHTML(type, data) {
   let html = F('title','Título','Nome do item',false,data.title||data.name);
   if (type==='senha') {
     html += F('username','Utilizador / Email','utilizador@email.com',false,data.username);
-    html += `<div class="field"><label>Senha</label><div style="position:relative"><input type="password" id="f_password" placeholder="A senha" value="${esc(data.password||'')}" oninput="updateStrength(this.value,'fStr','fStrL')"><button onclick="genPass()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif">⟳ Gerar</button></div><div class="strength-bar"><div class="strength-fill" id="fStr"></div></div><div class="strength-label" id="fStrL"></div></div>`;
+    html += `<div class="field"><label>Senha</label><div style="position:relative"><input type="password" id="f_password" placeholder="A senha" value="${esc(data.password||'')}" oninput="updateStrength(this.value,'fStr','fStrL')"><button onclick="genPass()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:11px;cursor:pointer;font-family:'Syne',sans-serif">⟳ Gerar</button></div><div class="strength-bar"><div class="strength-fill" id="fStr"></div></div><div class="strength-label" id="fStrL"></div></div>`;
     html += F('url','URL (opcional)','https://site.com',false,data.url);
     html += F('notes','Notas (opcional)','Informações adicionais',false,data.notes);
   } else if (type==='nota') {
-    html += `<div class="field"><label>Conteúdo</label><textarea id="f_content" placeholder="Escreve aqui..." style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;resize:vertical;min-height:120px;transition:border 0.2s" onfocus="this.style.borderColor='var(--cyan)'" onblur="this.style.borderColor='var(--border)'">${esc(data.content||'')}</textarea></div>`;
+    html += `<div class="field"><label>Conteúdo</label><textarea id="f_content" placeholder="Escreve aqui..." style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:14px;font-family:'Syne',sans-serif;outline:none;resize:vertical;min-height:120px;transition:border 0.2s" onfocus="this.style.borderColor='var(--cyan)'" onblur="this.style.borderColor='var(--border)'">${esc(data.content||'')}</textarea></div>`;
   } else if (type==='cartao') {
     html += F('holder','Titular do cartão','Nome no cartão',false,data.holder);
     html += F('number','Número do cartão','•••• •••• •••• ••••',true,data.number);
@@ -1164,10 +940,10 @@ function getItemFormHTML(type, data) {
     html += F('host','Host / IP','192.168.1.1 ou servidor.com',false,data.host);
     html += `<div class="field-row">${F('username','Utilizador','root',false,data.username)}${F('port','Porta','22',false,data.port)}</div>`;
     html += F('password','Senha (opcional)','••••••••',true,data.password);
-    html += `<div class="field"><label>Chave privada (opcional)</label><textarea id="f_privateKey" placeholder="-----BEGIN RSA PRIVATE KEY-----" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:12px;font-family:'Fira Code',monospace;outline:none;resize:vertical;min-height:80px;transition:border 0.2s" onfocus="this.style.borderColor='var(--cyan)'" onblur="this.style.borderColor='var(--border)'">${esc(data.privateKey||'')}</textarea></div>`;
+    html += `<div class="field"><label>Chave privada (opcional)</label><textarea id="f_privateKey" placeholder="-----BEGIN RSA PRIVATE KEY-----" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:12px;font-family:'JetBrains Mono',monospace;outline:none;resize:vertical;min-height:80px;transition:border 0.2s" onfocus="this.style.borderColor='var(--cyan)'" onblur="this.style.borderColor='var(--border)'">${esc(data.privateKey||'')}</textarea></div>`;
     html += F('notes','Notas','Informações adicionais',false,data.notes);
   }
-  html += `<button class="btn btn-primary" style="margin-top:8px" data-itype="${type}" onclick="saveItem(this.dataset.itype)">💾 Guardar item</button>`;
+  html += `<button class="btn btn-primary" style="margin-top:8px" onclick="saveItem('${type}')">💾 Guardar item</button>`;
   html += `<button class="btn btn-ghost" onclick="state.editingId?closeModal():openNewItemModal()">← Voltar</button>`;
   return html;
 }
@@ -1175,10 +951,10 @@ function getItemFormHTML(type, data) {
 function gv(id){ const el=document.getElementById('f_'+id); return el?el.value.trim():''; }
 
 async function saveItem(type) {
-  const titleEl = document.getElementById('f_title');
-  const title = titleEl ? titleEl.value.trim() : '';
+  const title = gv('title');
   if (!title) { 
-    if(titleEl){titleEl.classList.add('field-error');titleEl.focus();}
+    const tf=document.getElementById('f_title');
+    if(tf){tf.classList.add('field-error');tf.focus();}
     return toast('O título é obrigatório','err'); 
   }
   let data = { title, type };
@@ -1208,16 +984,12 @@ async function saveItem(type) {
   }
   try {
     const blob = await encryptItem(data, state.cryptoKey);
-    // Mapear tipos para os valores aceites pelo servidor
-    const typeMap = { senha:'password', nota:'note', cartao:'password', identidade:'secret', crypto:'secret', ssh:'secret' };
-    const serverType = typeMap[type] || 'note';
-    const preview = data.title.substring(0,40);
     if (state.editingId) {
-      await api('PUT', '/items/'+state.editingId, { encryptedData: blob, itemType: serverType, title: data.title, preview }, true);
+      await api('PUT', '/items/'+state.editingId, { encryptedBlob: blob, itemType: type }, true);
       const idx = state.items.findIndex(i=>i.id===state.editingId);
       if (idx>-1) state.items[idx] = { ...data, id: state.editingId };
     } else {
-      const res = await api('POST', '/items', { encryptedData: blob, itemType: serverType, title: data.title, preview }, true);
+      const res = await api('POST', '/items', { encryptedBlob: blob, itemType: type }, true);
       state.items.unshift({ ...data, id: res.id });
     }
     closeModal();
@@ -1269,12 +1041,12 @@ function showChangePassword() {
   document.getElementById('navMenu').classList.remove('open');
   document.getElementById('modalTitle').textContent = 'Mudar senha mestre';
   document.getElementById('modalBody').innerHTML = `
-    <div class="field"><label>Senha atual</label><div style="position:relative"><input type="password" id="cp_old" placeholder="Senha atual" style="padding-right:52px"><button type="button" onclick="togglePassById('cp_old',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:18px;cursor:pointer">👁</button></div></div>
-    <div class="field"><label>Nova senha</label><div style="position:relative"><input type="password" id="cp_new" placeholder="Nova senha (mín. 8 car.)" oninput="updateStrength(this.value,'cpStr','cpStrL');checkCpMatch()" style="padding-right:52px"><button type="button" onclick="togglePassById('cp_new',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:18px;cursor:pointer">👁</button></div>
+    <div class="field"><label>Senha atual</label><input type="password" id="cp_old" placeholder="Senha atual"></div>
+    <div class="field"><label>Nova senha</label><input type="password" id="cp_new" placeholder="Nova senha (mín. 8 car.)" oninput="updateStrength(this.value,'cpStr','cpStrL')">
       <div class="strength-bar"><div class="strength-fill" id="cpStr"></div></div>
       <div class="strength-label" id="cpStrL"></div>
     </div>
-    <div class="field"><label>Confirmar nova senha</label><div style="position:relative"><input type="password" id="cp_new2" placeholder="Confirma a nova senha" oninput="checkCpMatch()" style="padding-right:52px"><button type="button" onclick="togglePassById('cp_new2',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:18px;cursor:pointer">👁</button></div><div class="field-msg" id="cpMatchMsg"></div></div>
+    <div class="field"><label>Confirmar nova senha</label><input type="password" id="cp_new2" placeholder="Confirma a nova senha"></div>
     <button class="btn btn-primary" onclick="doChangePass()">Alterar senha</button>`;
   document.getElementById('modalOverlay').classList.add('open');
 }
@@ -1316,20 +1088,17 @@ function startOTPTimer() {
   },1000);
 }
 
-// OTP single input
-function otpSingleInput() {
-  const inp = document.getElementById('otpSingleInput');
-  // só números
-  inp.value = inp.value.replace(/\D/g, '').substring(0, 6);
-  // auto-submit quando 6 dígitos
-  if (inp.value.length === 6) doOTP();
-}
-
+// OTP input helpers
 function otpInput(i) {
-  // legacy — não usado mas mantido para compatibilidade
+  const v=document.getElementById('d'+i).value.replace(/\D/g,'');
+  document.getElementById('d'+i).value=v;
+  if (v && i<5) document.getElementById('d'+(i+1)).focus();
+  if (i===5 && v) doOTP();
 }
 function otpKey(i,e) {
-  // legacy
+  if (e.key==='Backspace'&&!document.getElementById('d'+i).value&&i>0) document.getElementById('d'+(i-1)).focus();
+  if (e.key==='ArrowLeft'&&i>0) document.getElementById('d'+(i-1)).focus();
+  if (e.key==='ArrowRight'&&i<5) document.getElementById('d'+(i+1)).focus();
 }
 
 // ═══════════════════════════════════════
@@ -1352,9 +1121,6 @@ function showView(id) {
     ['loginEmail','loginPass'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
     ['loginEmailMsg','loginPassMsg'].forEach(f=>{const el=document.getElementById(f);if(el){el.textContent='';el.className='field-msg';}});
     const eb=document.getElementById('loginErrBox');if(eb)eb.style.display='none';
-    // Limpar OTP
-    const oi = document.getElementById('otpSingleInput');
-    if(oi) oi.value = '';
   }
   if (id==='registerView') {
     ['regName','regEmail','regPass','regPass2'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
@@ -1408,7 +1174,6 @@ function clearFieldState(inputId, msgId) {
 // INIT
 // ═══════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  loadTheme();
   initTimer();
 });
 </script>
