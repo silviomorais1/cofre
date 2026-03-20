@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VelorumSafe — Cofre Digital</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔒</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080e1a;
+  --bg2:#0d1525;
+  --bg3:#111d30;
+  --border:#1e3050;
+  --border2:#243a5e;
+  --cyan:#00d4ff;
+  --cyan2:#00a8cc;
+  --cyan-glow:rgba(0,212,255,0.15);
+  --cyan-glow2:rgba(0,212,255,0.08);
+  --text:#e8f4f8;
+  --text2:#8ba8c4;
+  --text3:#4a6580;
+  --red:#ff4466;
+  --yellow:#ffcc00;
+  --green:#00ff88;
+  --card:#0d1828;
+  --radius:12px;
+  --session:30;
+  --body-grad:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(0,180,255,0.06) 0%,transparent 50%),var(--bg);
+}
+/* ── TEMA CLARO ── */
+[data-theme="light"]{
+  --bg:#f0f4f8;
+  --bg2:#ffffff;
+  --bg3:#e8eef5;
+  --border:#c8d8e8;
+  --border2:#a8c0d8;
+  --cyan:#0088bb;
+  --cyan2:#006699;
+  --cyan-glow:rgba(0,136,187,0.15);
+  --cyan-glow2:rgba(0,136,187,0.1);
+  --text:#0d1e30;
+  --text2:#3a5a78;
+  --text3:#7a9ab8;
+  --red:#cc2244;
+  --yellow:#cc8800;
+  --green:#007744;
+  --card:#ffffff;
+  --body-grad:radial-gradient(ellipse at 20% 0%,rgba(0,136,187,0.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(0,100,180,0.04) 0%,transparent 50%),var(--bg);
+}
+[data-theme="light"] #navbar{background:rgba(240,244,248,0.92)}
+[data-theme="light"] .auth-card{box-shadow:0 4px 40px rgba(0,0,0,0.1)}
+[data-theme="light"] .item-card{box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+[data-theme="light"] .otp-single{background:var(--bg3)}
+
+/* ── THEME TOGGLE BUTTON ── */
+.theme-toggle{
+  background:var(--bg2);border:1px solid var(--border);
+  color:var(--text2);border-radius:8px;padding:6px 10px;
+  font-size:16px;cursor:pointer;transition:all 0.2s;line-height:1;
+}
+.theme-toggle:hover{border-color:var(--border2);color:var(--text)}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden}
+body{background:var(--body-grad)}
+
+
+
+/* ── COUNTDOWN BADGE ── */
+#timerBadge{
+  background:rgba(13,24,40,0.9);
+  border:1px solid var(--border2);
+  border-radius:20px;
+  padding:4px 14px;
+  font-family:'Fira Code',monospace;
+  font-size:12px;
+  color:var(--text2);
+  display:none;
+  gap:6px;
+  align-items:center;
+  transition:all 0.3s;
+}
+#timerBadge.active{display:flex}
+#timerBadge.warn{color:var(--yellow);border-color:rgba(255,204,0,0.4);background:rgba(255,204,0,0.06)}
+#timerBadge.danger{color:var(--red);border-color:rgba(255,68,102,0.4);background:rgba(255,68,102,0.06);animation:pulseBadge 0.6s ease-in-out infinite alternate}
+@keyframes pulseBadge{from{opacity:1}to{opacity:0.5}}
+#timerDot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* ── NAV ── */
+#navbar{
+  position:fixed;top:0;left:0;right:0;height:56px;z-index:100;
+  background:rgba(8,14,26,0.85);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(16px);
+  display:none;align-items:center;justify-content:space-between;
+  padding:0 24px;
+}
+#navbar.active{display:flex}
+.nav-logo{display:flex;align-items:center;gap:10px;font-size:1.2rem;font-weight:800;letter-spacing:-0.5px}
+.nav-logo .lock{font-size:1.1rem}
+.nav-logo .v{color:#fff}.nav-logo .s{color:var(--cyan)}
+.nav-badge{background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--cyan);font-size:10px;font-family:'Fira Code',monospace;padding:2px 8px;border-radius:20px;font-weight:600}
+.nav-right{display:flex;align-items:center;gap:16px}
+.nav-user{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);transition:all 0.2s;font-size:13px;color:var(--text2);position:relative}
+.nav-user:hover{border-color:var(--border2);color:var(--text)}
+.nav-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--cyan2),#0066aa);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.nav-menu{position:absolute;top:calc(100% + 8px);right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;min-width:180px;overflow:hidden;display:none;z-index:200}
+.nav-menu.open{display:block}
+.nav-menu-item{padding:10px 16px;font-size:13px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:10px;transition:all 0.15s}
+.nav-menu-item:hover{background:var(--bg3);color:var(--text)}
+.nav-menu-item.danger{color:var(--red)}
+.nav-menu-item.danger:hover{background:rgba(255,68,102,0.08)}
+.nav-menu-sep{height:1px;background:var(--border);margin:4px 0}
+
+/* ── VIEWS ── */
+.view{display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+.view.active{display:flex}
+#vaultView{display:none;flex-direction:column;padding-top:56px}
+#vaultView.active{display:flex}
+
+/* ── AUTH CARD ── */
+.auth-card{
+  width:100%;max-width:420px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:40px;
+  box-shadow:0 0 60px rgba(0,0,0,0.5),0 0 120px rgba(0,212,255,0.03);
+  animation:fadeUp 0.4s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.auth-logo{text-align:center;margin-bottom:32px}
+.auth-logo .big{font-size:2rem;font-weight:800;letter-spacing:-1px}
+.auth-logo .big .v{color:#fff}.auth-logo .big .s{color:var(--cyan)}
+.auth-logo .sub{font-size:11px;color:var(--text3);font-family:'Fira Code',monospace;margin-top:4px;letter-spacing:2px;text-transform:uppercase}
+.lock-icon{font-size:2.5rem;margin-bottom:8px}
+.auth-title{font-size:1.1rem;font-weight:700;margin-bottom:6px;color:var(--text)}
+.auth-sub{font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.5}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'Fira Code',monospace}
+.field input{
+  width:100%;background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;padding:12px 16px;
+  color:var(--text);font-size:14px;font-family:'Inter',sans-serif;
+  outline:none;transition:all 0.2s;
+}
+.field input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-glow2)}
+.field input::placeholder{color:var(--text3)}
+.field input.field-error{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(255,68,102,0.12)!important}
+.field input.field-ok{border-color:var(--green)!important;box-shadow:0 0 0 3px rgba(0,255,136,0.08)!important}
+.field-msg{font-size:11px;margin-top:5px;font-family:'Fira Code',monospace;min-height:14px}
+.field-msg.err{color:var(--red)}.field-msg.ok{color:var(--green)}
+.btn{
+  display:block;width:100%;padding:14px;border:none;border-radius:10px;cursor:pointer;
+  font-family:'Inter',sans-serif;font-size:15px;font-weight:700;
+  transition:all 0.2s;margin-top:4px;text-align:center;
+  -webkit-appearance:none;appearance:none;
+}
+.btn-primary{
+  background:linear-gradient(135deg,#00d4ff,#00a8cc) !important;
+  color:#000 !important;
+  font-weight:700 !important;
+  border:none !important;
+  box-shadow:0 2px 12px rgba(0,212,255,0.2);
+}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,212,255,0.35) !important}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:0.6;cursor:not-allowed;transform:none;box-shadow:none !important}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);margin-top:12px}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text)}
+.auth-link{text-align:center;margin-top:16px;font-size:13px;color:var(--text3)}
+.auth-link a{color:var(--cyan);cursor:pointer;text-decoration:none}
+.auth-link a:hover{text-decoration:underline}
+
+/* ── OTP SINGLE INPUT ── */
+.otp-single-wrap{
+  position:relative;
+  margin:20px 0;
+}
+.otp-single{
+  width:100%;
+  height:64px;
+  text-align:center;
+  font-size:28px;
+  font-weight:700;
+  letter-spacing:18px;
+  font-family:'Fira Code',monospace;
+  background:var(--bg2);
+  border:2px solid var(--border);
+  border-radius:14px;
+  color:var(--text);
+  outline:none;
+  transition:all 0.2s;
+  padding:0 16px;
+  caret-color: var(--cyan);
+}
+.otp-single:focus{
+  border-color:var(--cyan);
+  box-shadow:0 0 0 4px var(--cyan-glow2), 0 0 20px rgba(0,212,255,0.1);
+}
+.otp-single::placeholder{
+  color:var(--border2);
+  letter-spacing:18px;
+}
+.otp-timer{text-align:center;font-size:12px;color:var(--text3);font-family:'Fira Code',monospace;margin-bottom:8px}
+
+/* ── RECOVERY CODES ── */
+.recovery-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
+.recovery-code{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:'Fira Code',monospace;font-size:13px;color:var(--cyan);text-align:center;letter-spacing:2px}
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;line-height:1.5}
+.alert-warn{background:rgba(255,204,0,0.08);border:1px solid rgba(255,204,0,0.3);color:#ffcc00}
+.alert-info{background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);color:var(--text2)}
+.alert-success{background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.2);color:var(--green)}
+
+/* ── VAULT ── */
+#vaultMain{flex:1;padding:24px;max-width:1100px;margin:0 auto;width:100%}
+.vault-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+.search-box{flex:1;min-width:200px;position:relative}
+.search-box input{
+  width:100%;background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;padding:10px 16px 10px 42px;
+  color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:all 0.2s;
+}
+.search-box input:focus{border-color:var(--border2)}
+.search-box::before{content:"⌕";position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none}
+.filter-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.ftab{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif}
+.ftab:hover{border-color:var(--border2);color:var(--text)}
+.ftab.active{background:rgba(0,212,255,0.1);border-color:var(--cyan);color:var(--cyan)}
+.btn-new{background:linear-gradient(135deg,var(--cyan),var(--cyan2));color:#fff;border:none;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-family:'Inter',sans-serif}
+.btn-new:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(0,212,255,0.25)}
+
+/* ── ITEMS GRID ── */
+.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.item-card{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:18px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;
+}
+.item-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity 0.2s}
+.item-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,0.3)}
+.item-card:hover::before{opacity:1}
+.item-card[data-type="senha"]::before{background:var(--cyan)}
+.item-card[data-type="nota"]::before{background:var(--yellow)}
+.item-card[data-type="cartao"]::before{background:#a855f7}
+.item-card[data-type="identidade"]::before{background:var(--green)}
+.item-card[data-type="crypto"]::before{background:#f97316}
+.item-card[data-type="ssh"]::before{background:#ec4899}
+.item-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.item-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.item-icon.senha{background:rgba(0,212,255,0.1)}
+.item-icon.nota{background:rgba(255,204,0,0.1)}
+.item-icon.cartao{background:rgba(168,85,247,0.1)}
+.item-icon.identidade{background:rgba(0,255,136,0.1)}
+.item-icon.crypto{background:rgba(249,115,22,0.1)}
+.item-icon.ssh{background:rgba(236,72,153,0.1)}
+.item-title{font-size:14px;font-weight:700;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item-type-badge{font-size:10px;font-family:'Fira Code',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:2px 8px;background:var(--bg2);border-radius:20px}
+.item-preview{font-size:12px;color:var(--text3);font-family:'Fira Code',monospace;margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-actions{display:flex;gap:6px;justify-content:flex-end}
+.ia{padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s}
+.ia:hover{border-color:var(--border2);color:var(--text)}
+.ia.del:hover{border-color:rgba(255,68,102,0.4);color:var(--red);background:rgba(255,68,102,0.05)}
+.empty-state{grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--text3)}
+.empty-state .e-icon{font-size:3rem;margin-bottom:16px;opacity:0.3}
+.empty-state p{font-size:14px;margin-top:8px}
+
+/* ── MODAL ── */
+#modalOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;
+  display:none;align-items:center;justify-content:center;padding:20px;
+  backdrop-filter:blur(4px);
+}
+#modalOverlay.open{display:flex}
+.modal{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:18px;
+  width:100%;max-width:480px;max-height:90vh;overflow-y:auto;
+  animation:fadeUp 0.25s ease;
+}
+.modal-header{padding:24px 24px 0;display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:1rem;font-weight:700;color:var(--text)}
+.modal-close{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px;border-radius:6px;transition:color 0.15s}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:20px 24px 24px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.strength-bar{height:3px;border-radius:2px;background:var(--border);margin-top:6px;overflow:hidden}
+.strength-fill{height:100%;border-radius:2px;transition:all 0.3s}
+.strength-label{font-size:10px;font-family:'Fira Code',monospace;margin-top:4px}
+.gen-btn{position:relative;cursor:pointer}
+.gen-btn::after{content:"⟳ Gerar";position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--cyan);cursor:pointer;pointer-events:none}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:24px;right:24px;z-index:9999;
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:12px;padding:14px 18px;
+  display:flex;align-items:center;gap:10px;
+  font-size:13px;color:var(--text);
+  box-shadow:0 8px 30px rgba(0,0,0,0.4);
+  transform:translateY(80px);opacity:0;
+  transition:all 0.3s;max-width:320px;
+}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.ok{border-color:rgba(0,255,136,0.3)}
+#toast.err{border-color:rgba(255,68,102,0.3)}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── NAV ICON BUTTON ── */
+.nav-icon-btn{
+  background:var(--bg2);border:1px solid var(--border);color:var(--text2);
+  border-radius:8px;padding:6px 10px;font-size:16px;cursor:pointer;
+  transition:all 0.2s;line-height:1;
+}
+.nav-icon-btn:hover{border-color:var(--border2);color:var(--text)}
+
+/* ── AUDIT LOG PANEL ── */
+#auditPanel{
+  position:fixed;top:56px;right:0;bottom:0;width:380px;
+  background:var(--bg2);border-left:1px solid var(--border);
+  z-index:300;display:none;flex-direction:column;
+  animation:slideIn 0.25s ease;
+}
+#auditPanel.open{display:flex}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.audit-header{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.audit-header h3{font-size:14px;font-weight:700;color:var(--text)}
+.audit-close{background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:4px;border-radius:6px}
+.audit-close:hover{color:var(--text)}
+.audit-list{flex:1;overflow-y:auto;padding:12px}
+.audit-item{
+  padding:10px 12px;border-radius:8px;margin-bottom:6px;
+  border:1px solid var(--border);background:var(--bg3);
+  transition:border-color 0.15s;
+}
+.audit-item:hover{border-color:var(--border2)}
+.audit-action{font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.audit-detail{font-size:11px;color:var(--text3);margin-top:3px;font-family:'Fira Code',monospace}
+.audit-time{font-size:10px;color:var(--text3);margin-top:4px;font-family:'Fira Code',monospace}
+.audit-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.audit-empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav id="navbar">
+  <div class="nav-logo">
+    <span class="lock">🔒</span>
+    <span><span class="v">Velorum</span><span class="s">Safe</span></span>
+    <span class="nav-badge">v3.0</span>
+  </div>
+  <div class="nav-right">
+    <div id="timerBadge"><span id="timerDot"></span><span id="timerCount"></span></div>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Alternar tema">🌙</button>
+    <button class="nav-icon-btn" onclick="openAuditLog()" title="Histórico de actividade">📋</button>
+    <div class="nav-user" onclick="toggleNavMenu()">
+      <div class="nav-avatar" id="navAvatar">S</div>
+      <span id="navName">Utilizador</span>
+      <span>▾</span>
+      <div class="nav-menu" id="navMenu">
+        <div class="nav-menu-item" onclick="showChangePassword()">🔑 Mudar senha</div>
+        <div class="nav-menu-item" onclick="exportVault()">📤 Exportar cofre</div>
+        <div class="nav-menu-item" onclick="openAuditLog()">📋 Histórico</div>
+        <div class="nav-menu-sep"></div>
+        <div class="nav-menu-item danger" onclick="doLogout()">🚪 Sair</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- LOGIN VIEW -->
+<div class="view active" id="loginView">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="lock-icon">🔒</div>
+      <div class="big"><span class="v">Velorum</span><span class="s">Safe</span></div>
+      <div class="sub">Cofre Digital Seguro</div>
+    </div>
+    <div id="loginAlert" style="display:none" class="alert alert-info" id="loginAlert"></div>
+    <div class="field">
+      <label>Email</label>
+      <input type="text" id="loginEmail" placeholder="o_teu@email.com" autocomplete="username" oninput="clearFieldState('loginEmail','loginEmailMsg')">
+      <div class="field-msg" id="loginEmailMsg"></div>
+    </div>
+    <div class="field">
+      <label>Senha mestre</label>
+      <div style="position:relative">
+        <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" oninput="clearFieldState('loginPass','loginPassMsg')" onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:52px">
+        <button type="button" onclick="togglePassById('loginPass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:18px;cursor:pointer">👁</button>
+      </div>
+      <div class="field-msg" id="loginPassMsg"></div>
+    </div>
+    <div id="loginErrBox" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(255,68,102,0.08);border:1px solid rgba(255,68,102,0.3);border-radius:10px;font-size:13px;color:var(--red)"></div>
+    <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Entrar</button>
+    <div class="auth-link">Não tens conta? <a onclick="showView('registerView')">Criar conta</a></div>
+  </div>
+</div>
+
+<!-- REGISTER VIEW -->
+<div class="view" id="registerView">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="lock-icon">✨</div>
+      <div class="big"><span class="v">Velorum</span><span class="s">Safe</span></div>
+      <div class="sub">Criar conta</div>
+    </div>
+    <div class="field">
+      <label>Nome</label>
+      <input type="text" id="regName" placeholder="O teu nome" autocomplete="name">
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="text" id="regEmail" placeholder="o_teu@email.com" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Senha mestre</label>
+      <div style="position:relative">
+        <input type="password" id="regPass" placeholder="Mínimo 8 caracteres" autocomplete="new-password" oninput="updateRegStrength()" style="padding-right:52px">
+        <button type="button" onclick="togglePassById('regPass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:18px;cursor:pointer">👁</button>
+      </div>
+      <div class="strength-bar"><div class="strength-fill" id="regStrengthFill"></div></div>
+      <div class="strength-label" id="regStrengthLabel" style="color:var(--text3)"></div>
+    </div>
+    <div class="field">
+      <label>Confirmar senha</label>
+      <div style="position:relative">
+        <input type="password" id="regPass2" placeholder="Repete a senha" autocomplete="new-password" oninput="checkPassMatch()" onkeydown="if(event.key==='Enter')doRegister()" style="padding-right:52px">
+        <button type="button" onclick="togglePassById('regPass2',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:18px;cursor:pointer">👁</button>
+      </div>
+      <div class="field-msg" id="regPass2Msg"></div>
+    </div>
+    <button class="btn btn-primary" onclick="doRegister()">Criar conta</button>
+    <div class="auth-link">Já tens conta? <a onclick="showView('loginView')">Entrar</a></div>
+  </div>
+</div>
+
+<!-- OTP VIEW -->
+<div class="view" id="otpView">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="lock-icon">📧</div>
+      <div class="big"><span class="v">Velorum</span><span class="s">Safe</span></div>
+      <div class="sub">Verificação</div>
+    </div>
+    <p style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:4px">Código enviado para</p>
+    <p style="font-size:14px;font-weight:700;text-align:center;color:var(--cyan);margin-bottom:20px;font-family:'Fira Code',monospace" id="otpEmailDisplay"></p>
+    <div class="otp-single-wrap">
+      <input type="text" id="otpSingleInput" class="otp-single" maxlength="6" placeholder="______" autocomplete="one-time-code" oninput="otpSingleInput()" onkeydown="if(event.key==='Enter')doOTP()">
+      <div class="otp-single-dots" id="otpDots">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+    <div class="otp-timer" id="otpTimerDisp">Válido por <span id="otpSecs">600</span>s</div>
+    <button class="btn btn-primary" onclick="doOTP()">Verificar código</button>
+    <button class="btn btn-ghost" onclick="resendOTP()">Reenviar código</button>
+    <div class="auth-link"><a onclick="showView('loginView')">← Voltar ao login</a></div>
+  </div>
+</div>
+
+<!-- RECOVERY CODES VIEW -->
+<div class="view" id="recoveryView">
+  <div class="auth-card" style="max-width:480px">
+    <div class="auth-logo">
+      <div class="lock-icon">🛡️</div>
+      <div class="big"><span class="v">Velorum</span><span class="s">Safe</span></div>
+      <div class="sub">Códigos de recuperação</div>
+    </div>
+    <div class="alert alert-warn">⚠️ Guarda estes códigos num lugar seguro. Cada um só pode ser usado uma vez para recuperar o acesso caso percas a senha.</div>
+    <div class="recovery-grid" id="recoveryCodes"></div>
+    <button class="btn btn-primary" onclick="proceedToVault()" style="margin-top:8px">Guardei os códigos — Entrar no cofre</button>
+  </div>
+</div>
+
+<!-- VAULT VIEW -->
+<div id="vaultView">
+  <div id="vaultMain">
+    <div class="vault-toolbar">
+      <div class="search-box">
+        <input type="text" placeholder="Pesquisar no cofre..." id="searchInput" oninput="filterItems()">
+      </div>
+      <div class="filter-tabs">
+        <button class="ftab active" onclick="setFilter('todos',this)">Todos</button>
+        <button class="ftab" onclick="setFilter('senha',this)">Senha</button>
+        <button class="ftab" onclick="setFilter('nota',this)">Nota</button>
+        <button class="ftab" onclick="setFilter('cartao',this)">Cartão</button>
+        <button class="ftab" onclick="setFilter('identidade',this)">Identidade</button>
+        <button class="ftab" onclick="setFilter('crypto',this)">Crypto</button>
+        <button class="ftab" onclick="setFilter('ssh',this)">SSH/API</button>
+      </div>
+      <select id="sortSelect" onchange="loadItems()" style="background:var(--bg2);border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:8px 12px;font-size:12px;font-family:'Inter',sans-serif;outline:none;cursor:pointer">
+        <option value="newest">↓ Mais recente</option>
+        <option value="oldest">↑ Mais antigo</option>
+        <option value="az">A → Z</option>
+        <option value="za">Z → A</option>
+        <option value="updated">↓ Actualizado</option>
+      </select>
+      <button class="btn-new" onclick="openNewItemModal()">+ Novo item</button>
+    </div>
+    <div class="items-grid" id="itemsGrid"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Novo item</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- AUDIT LOG PANEL -->
+<div id="auditPanel">
+  <div class="audit-header">
+    <h3>📋 Histórico de actividade</h3>
+    <button class="audit-close" onclick="closeAuditLog()">✕</button>
+  </div>
+  <div class="audit-list" id="auditList">
+    <div class="audit-empty">A carregar...</div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"><span id="toastIcon"></span><span id="toastMsg"></span></div>
+
+<script>
+// ═══════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════
+const API = 'http://localhost:3001/api';
+const SESSION_SECONDS = 30; // tempo de inatividade antes de encerrar
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let state = {
+  token: null,
+  user: null,
+  cryptoKey: null,
+  items: [],
+  filter: 'todos',
+  editingId: null,
+  pendingEmail: null,
+  pendingPass: null,
+};
+
+// ═══════════════════════════════════════
+// TEMA CLARO / ESCURO
+// ═══════════════════════════════════════
+function toggleTheme() {
+  const html = document.documentElement;
+  const isLight = html.getAttribute('data-theme') === 'light';
+  const newTheme = isLight ? 'dark' : 'light';
+  html.setAttribute('data-theme', newTheme === 'dark' ? '' : 'light');
+  document.getElementById('themeBtn').textContent = newTheme === 'light' ? '☀️' : '🌙';
+  localStorage.setItem('vs-theme', newTheme);
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem('vs-theme') || 'dark';
+  if (saved === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = '☀️';
+  }
+}
+
+// ═══════════════════════════════════════
+// AUDIT LOG
+// ═══════════════════════════════════════
+const auditIcons = {
+  register:         { icon:'✨', color:'var(--cyan)',   label:'Conta criada' },
+  login_success:    { icon:'✅', color:'var(--green)',  label:'Login efectuado' },
+  login_failed:     { icon:'⚠️', color:'var(--yellow)', label:'Tentativa falhada' },
+  login_blocked:    { icon:'🔒', color:'var(--red)',    label:'Conta bloqueada' },
+  login_otp_sent:   { icon:'📧', color:'var(--cyan)',   label:'Código OTP enviado' },
+  otp_failed:       { icon:'❌', color:'var(--red)',    label:'Código inválido' },
+  logout:           { icon:'🚪', color:'var(--text2)',  label:'Sessão encerrada' },
+  item_created:     { icon:'➕', color:'var(--green)',  label:'Item criado' },
+  item_updated:     { icon:'✏️', color:'var(--cyan)',   label:'Item editado' },
+  item_deleted:     { icon:'🗑️', color:'var(--red)',    label:'Item eliminado' },
+  password_changed: { icon:'🔑', color:'var(--yellow)', label:'Senha alterada' },
+  vault_exported:   { icon:'📤', color:'var(--cyan)',   label:'Cofre exportado' },
+};
+
+function formatAuditTime(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = Math.floor((now - d) / 1000);
+  if (diff < 60) return 'agora mesmo';
+  if (diff < 3600) return `há ${Math.floor(diff/60)} min`;
+  if (diff < 86400) return `há ${Math.floor(diff/3600)}h`;
+  return d.toLocaleDateString('pt-PT', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+}
+
+async function openAuditLog() {
+  document.getElementById('navMenu').classList.remove('open');
+  document.getElementById('auditPanel').classList.add('open');
+  document.getElementById('auditList').innerHTML = '<div class="audit-empty">A carregar...</div>';
+  try {
+    const res = await api('GET', '/audit?limit=100', null, true);
+    renderAuditLog(res.logs || []);
+  } catch(e) {
+    document.getElementById('auditList').innerHTML = '<div class="audit-empty">Erro ao carregar histórico</div>';
+  }
+}
+
+function closeAuditLog() {
+  document.getElementById('auditPanel').classList.remove('open');
+}
+
+function renderAuditLog(logs) {
+  const list = document.getElementById('auditList');
+  if (!logs.length) {
+    list.innerHTML = '<div class="audit-empty">📭 Sem registos ainda</div>';
+    return;
+  }
+  list.innerHTML = logs.map(l => {
+    const info = auditIcons[l.action] || { icon:'•', color:'var(--text3)', label:l.action };
+    return `<div class="audit-item">
+      <div class="audit-action">
+        <span class="audit-dot" style="background:${info.color}"></span>
+        <span>${info.icon} ${info.label}</span>
+      </div>
+      ${l.detail ? `<div class="audit-detail">${esc(l.detail)}</div>` : ''}
+      <div class="audit-time">${formatAuditTime(l.created_at)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// SMART INACTIVITY TIMER
+// ═══════════════════════════════════════
+let _timerSeconds = SESSION_SECONDS;
+let _timerInterval = null;
+let _timerActive = false;
+let _timerBadge = null;
+let _timerCount = null;
+
+function initTimer() {
+  _timerBadge = document.getElementById('timerBadge');
+  _timerCount = document.getElementById('timerCount');
+
+  // Eventos de atividade do utilizador
+  const events = ['mousemove','mousedown','keydown','keypress','scroll','touchstart','touchmove','click','wheel'];
+  events.forEach(e => document.addEventListener(e, onUserActivity, { passive: true }));
+}
+
+function onUserActivity() {
+  if (!_timerActive) return;
+  resetTimer();
+}
+
+function startTimer() {
+  _timerActive = true;
+  _timerSeconds = SESSION_SECONDS;
+  updateTimerUI();
+  clearInterval(_timerInterval);
+  _timerInterval = setInterval(tickTimer, 1000);
+}
+
+function stopTimer() {
+  _timerActive = false;
+  clearInterval(_timerInterval);
+  _timerBadge.className = '';
+}
+
+function resetTimer() {
+  _timerSeconds = SESSION_SECONDS;
+  updateTimerUI();
+}
+
+function tickTimer() {
+  if (!_timerActive) return;
+  _timerSeconds--;
+  if (_timerSeconds <= 0) {
+    stopTimer();
+    doLogout(true);
+    return;
+  }
+  updateTimerUI();
+}
+
+function updateTimerUI() {
+  const m = Math.floor(_timerSeconds / 60);
+  const s = _timerSeconds % 60;
+  _timerCount.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  _timerBadge.className = 'active';
+
+  if (_timerSeconds <= 8) {
+    _timerBadge.classList.add('danger');
+  } else if (_timerSeconds <= 15) {
+    _timerBadge.classList.add('warn');
+  }
+}
+
+// ═══════════════════════════════════════
+// CRYPTO
+// ═══════════════════════════════════════
+async function deriveKey(password, emailSalt) {
+  const enc = new TextEncoder();
+  const salt = enc.encode(emailSalt.toLowerCase() + ':velorumsafe:v2');
+  const km = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' },
+    km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+  );
+}
+
+async function hashForServer(password, email) {
+  const enc = new TextEncoder();
+  const salt = enc.encode('server:' + email.toLowerCase());
+  const km = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    km, { name: 'AES-GCM', length: 256 }, true, ['encrypt']
+  );
+  const raw = await crypto.subtle.exportKey('raw', key);
+  return btoa(String.fromCharCode(...new Uint8Array(raw)));
+}
+
+async function encryptItem(data, key) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = new TextEncoder();
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(data)));
+  const combined = new Uint8Array(12 + ct.byteLength);
+  combined.set(iv); combined.set(new Uint8Array(ct), 12);
+  return btoa(String.fromCharCode(...combined));
+}
+
+async function decryptItem(b64, key) {
+  const combined = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const iv = combined.slice(0, 12), ct = combined.slice(12);
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+
+// ═══════════════════════════════════════
+// API CALLS
+// ═══════════════════════════════════════
+async function api(method, path, body, auth) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth && state.token) headers['Authorization'] = 'Bearer ' + state.token;
+  const r = await fetch(API + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const err = new Error(data.error || data.message || 'Erro ' + r.status);
+    err.data = data;
+    err.status = r.status;
+    throw err;
+  }
+  return data;
+}
+
+// ═══════════════════════════════════════
+// AUTH FLOWS
+// ═══════════════════════════════════════
+async function doRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const pass2 = document.getElementById('regPass2').value;
+  if (!name || !email || !pass) return toast('Preenche todos os campos', 'err');
+  if (pass !== pass2) return toast('As senhas não coincidem', 'err');
+  if (pass.length < 8) return toast('Senha mínimo 8 caracteres', 'err');
+  try {
+    const hash = await hashForServer(pass, email);
+    const res = await api('POST', '/auth/register', { username: name, email, passwordHash: hash });
+    if (res.recoveryCodes) {
+      state.pendingEmail = email;
+      state.pendingPass = pass;
+      showRecoveryCodes(res.recoveryCodes);
+    } else {
+      toast('Conta criada! Verifica o email', 'ok');
+      showView('loginView');
+    }
+  } catch(e) { 
+    const msg = e.message.toLowerCase();
+    if (msg.includes('exist') || msg.includes('duplicat') || msg.includes('already') || msg.includes('em uso') || msg.includes('utilizado')) {
+      toast('Este email já está registado. Tenta fazer login.', 'err');
+    } else {
+      toast(e.message, 'err');
+    }
+  }
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const errBox = document.getElementById('loginErrBox');
+  errBox.style.display='none';
+  
+  if (!email) { 
+    setFieldState('loginEmail','loginEmailMsg','err','Email obrigatório');
+    return; 
+  }
+  if (!pass) { 
+    setFieldState('loginPass','loginPassMsg','err','Senha obrigatória');
+    return; 
+  }
+  
+  const btn = document.getElementById('loginBtn');
+  btn.textContent='A verificar...';btn.disabled=true;
+  
+  try {
+    const hash = await hashForServer(pass, email);
+    await api('POST', '/auth/login', { email, passwordHash: hash });
+    state.pendingEmail = email;
+    state.pendingPass = pass;
+    // Limpar campos após login bem-sucedido
+    document.getElementById('loginEmail').value='';
+    document.getElementById('loginPass').value='';
+    setFieldState('loginEmail','loginEmailMsg','','');
+    setFieldState('loginPass','loginPassMsg','','');
+    document.getElementById('otpEmailDisplay').textContent = email;
+    showView('otpView');
+    startOTPTimer();
+    const oi = document.getElementById('otpSingleInput');
+    if(oi){oi.value='';oi.focus();}
+  } catch(e) {
+    const d = e.data || {};
+    if (d.blocked) {
+      // Conta bloqueada — mostrar countdown
+      errBox.innerHTML = `🔒 Conta bloqueada por <strong>${d.mins || 15} minuto(s)</strong>.<br><small>Demasiadas tentativas falhadas. Tenta mais tarde.</small>`;
+      errBox.style.display='block';
+      setFieldState('loginEmail','loginEmailMsg','err','');
+      setFieldState('loginPass','loginPassMsg','err','');
+      // Desativar botão durante o bloqueio
+      const btn = document.getElementById('loginBtn');
+      let secs = (d.mins || 15) * 60;
+      btn.disabled = true;
+      const bl = setInterval(()=>{
+        secs--;
+        const m=Math.floor(secs/60), s=secs%60;
+        btn.textContent = `Bloqueado — ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        if (secs<=0){ clearInterval(bl); btn.disabled=false; btn.textContent='Entrar'; errBox.style.display='none'; clearFieldState('loginEmail','loginEmailMsg'); clearFieldState('loginPass','loginPassMsg'); }
+      }, 1000);
+    } else if (typeof d.remaining === 'number') {
+      errBox.textContent = `Email ou senha incorretos. Ainda tens ${d.remaining} tentativa(s) antes do bloqueio.`;
+      errBox.style.display='block';
+      setFieldState('loginPass','loginPassMsg','err','');
+    } else {
+      errBox.textContent = e.message || 'Email ou senha incorretos. Verifica os teus dados.';
+      errBox.style.display='block';
+      setFieldState('loginEmail','loginEmailMsg','err','');
+      setFieldState('loginPass','loginPassMsg','err','');
+    }
+  } finally {
+    btn.textContent='Entrar';btn.disabled=false;
+  }
+}
+
+async function doOTP() {
+  const inp = document.getElementById('otpSingleInput');
+  const code = inp ? inp.value.trim() : '';
+  if (code.length < 6) return toast('Introduz o código de 6 dígitos', 'err');
+  try {
+    const res = await api('POST', '/auth/verify-otp', { email: state.pendingEmail, otp: code });
+    state.token = res.token;
+    state.user = res.user;
+    state.cryptoKey = await deriveKey(state.pendingPass, state.pendingEmail);
+    state.pendingPass = null;
+    await enterVault();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function resendOTP() {
+  try {
+    const hash = await hashForServer(state.pendingPass || '?', state.pendingEmail);
+    await api('POST', '/auth/login', { email: state.pendingEmail, passwordHash: hash });
+    toast('Novo código enviado!', 'ok');
+    startOTPTimer();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function enterVault() {
+  document.getElementById('navbar').classList.add('active');
+  document.getElementById('navName').textContent = state.user?.username || 'Utilizador';
+  document.getElementById('navAvatar').textContent = (state.user?.username||'U')[0].toUpperCase();
+  showVault();
+  await loadItems();
+  startTimer();
+}
+
+function proceedToVault() {
+  showView('loginView');
+  toast('Conta criada! Faz login agora', 'ok');
+}
+
+function doLogout(auto) {
+  // Chamar API para invalidar token (não aguardar)
+  if (state.token) {
+    api('POST', '/auth/logout', null, true).catch(()=>{});
+  }
+  stopTimer();
+  closeAuditLog();
+  state.token = null; state.user = null; state.cryptoKey = null;
+  state.items = []; state.pendingEmail = null; state.pendingPass = null;
+  document.getElementById('navbar').classList.remove('active');
+  document.getElementById('navMenu').classList.remove('open');
+  // Limpar OTP
+  const oi = document.getElementById('otpSingleInput');
+  if(oi) oi.value = '';
+  showView('loginView');
+  document.getElementById('vaultView').classList.remove('active');
+  if (auto) toast('Sessão encerrada por inatividade', 'err');
+  else toast('Sessão encerrada', 'ok');
+}
+
+// ═══════════════════════════════════════
+// VAULT
+// ═══════════════════════════════════════
+function showVault() {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('vaultView').classList.add('active');
+}
+
+async function loadItems() {
+  try {
+    const sort = document.getElementById('sortSelect')?.value || 'newest';
+    const res = await api('GET', '/items?sort='+sort, null, true);
+    state.items = [];
+    for (const item of (res.items || [])) {
+      try {
+        const plain = await decryptItem(item.encrypted_data, state.cryptoKey);
+        state.items.push({ id: item.id, type: item.item_type, ...plain });
+      } catch(e) { /* skip corrupted */ }
+    }
+    renderItems();
+  } catch(e) { toast('Erro ao carregar itens', 'err'); }
+}
+
+function renderItems() {
+  const grid = document.getElementById('itemsGrid');
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const f = state.filter;
+  const filtered = state.items.filter(it => {
+    if (f !== 'todos' && it.type !== f) return false;
+    if (q && !JSON.stringify(it).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="e-icon">🔒</div><p style="font-size:15px;font-weight:700;color:var(--text2)">Nenhum item encontrado</p><p>Clica em "+ Novo item" para começar</p></div>`;
+    return;
+  }
+  const icons = { senha:'🔑', nota:'📝', cartao:'💳', identidade:'🪪', crypto:'₿', ssh:'🖥️' };
+  grid.innerHTML = filtered.map(it => `
+    <div class="item-card" data-type="${it.type}" onclick="viewItem(${it.id})">
+      <div class="item-header">
+        <div class="item-icon ${it.type}">${icons[it.type]||'📦'}</div>
+        <span class="item-title">${esc(it.title||it.name||'Sem título')}</span>
+        <span class="item-type-badge">${it.type}</span>
+      </div>
+      <div class="item-preview">${getPreview(it)}</div>
+      <div class="item-actions">
+        <button class="ia" onclick="event.stopPropagation();copyMain(${it.id})">Copiar</button>
+        <button class="ia" onclick="event.stopPropagation();editItem(${it.id})">Editar</button>
+        <button class="ia del" onclick="event.stopPropagation();deleteItem(${it.id})">Eliminar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function getPreview(it) {
+  if (it.type==='senha') return it.username ? `👤 ${esc(it.username)}` : '••••••••';
+  if (it.type==='nota') return esc((it.content||'').substring(0,50));
+  if (it.type==='cartao') return it.number ? `**** **** **** ${esc(it.number.slice(-4))}` : '💳';
+  if (it.type==='identidade') return it.fullname ? esc(it.fullname) : '🪪';
+  if (it.type==='crypto') return it.wallet ? esc(it.wallet.substring(0,20)+'…') : '₿';
+  if (it.type==='ssh') return it.host ? esc(it.host) : '🖥️';
+  return '';
+}
+
+function filterItems() { renderItems(); }
+function setFilter(f, el) {
+  state.filter = f;
+  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderItems();
+}
+
+function viewItem(id) {
+  const it = state.items.find(i=>i.id===id);
+  if (!it) return;
+  const icons = { senha:'🔑', nota:'📝', cartao:'💳', identidade:'🪪', crypto:'₿', ssh:'🖥️' };
+  let html = `<div style="margin-bottom:16px"><div style="font-size:2rem;margin-bottom:8px">${icons[it.type]||'📦'}</div>`;
+  html += `<h2 style="font-size:1.1rem;font-weight:700">${esc(it.title||it.name||'Sem título')}</h2></div>`;
+  const fields = getItemFields(it);
+  fields.forEach(f => {
+    if (!f.value) return;
+    html += `<div class="field"><label>${f.label}</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="${f.secret?'password':'text'}" value="${esc(f.value)}" readonly style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Fira Code',monospace;font-size:13px;outline:none">
+        <button class="ia" onclick="navigator.clipboard.writeText('${esc(f.value)}');toast('Copiado!','ok')" style="flex-shrink:0">Copiar</button>
+        ${f.secret?`<button class="ia" onclick="togglePass(this)" style="flex-shrink:0">👁</button>`:''}
+      </div></div>`;
+  });
+  document.getElementById('modalTitle').textContent = it.title || it.name || 'Item';
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function getItemFields(it) {
+  if (it.type==='senha') return [{label:'Utilizador',value:it.username},{label:'Senha',value:it.password,secret:true},{label:'URL',value:it.url},{label:'Notas',value:it.notes}];
+  if (it.type==='nota') return [{label:'Conteúdo',value:it.content}];
+  if (it.type==='cartao') return [{label:'Titular',value:it.holder},{label:'Número',value:it.number,secret:true},{label:'Validade',value:it.expiry},{label:'CVV',value:it.cvv,secret:true},{label:'PIN',value:it.pin,secret:true}];
+  if (it.type==='identidade') return [{label:'Nome completo',value:it.fullname},{label:'BI / Passaporte',value:it.docnum},{label:'NIF',value:it.nif},{label:'Data de nascimento',value:it.dob},{label:'Notas',value:it.notes}];
+  if (it.type==='crypto') return [{label:'Carteira / Endereço',value:it.wallet},{label:'Seed phrase',value:it.seed,secret:true},{label:'Chave privada',value:it.privkey,secret:true},{label:'Exchange',value:it.exchange},{label:'Notas',value:it.notes}];
+  if (it.type==='ssh') return [{label:'Host',value:it.host},{label:'Utilizador',value:it.username},{label:'Senha',value:it.password,secret:true},{label:'Chave privada',value:it.privateKey,secret:true},{label:'Porta',value:it.port},{label:'Notas',value:it.notes}];
+  return [];
+}
+
+function togglePassById(id, btn) {
+  const inp = document.getElementById(id);
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+function checkPassMatch() {
+  const p1 = document.getElementById('regPass').value;
+  const p2 = document.getElementById('regPass2').value;
+  const msg = document.getElementById('regPass2Msg');
+  if (!msg) return;
+  if (!p2) { msg.textContent=''; msg.className='field-msg'; return; }
+  if (p1 === p2) {
+    msg.textContent = '✓ As senhas coincidem';
+    msg.className = 'field-msg ok';
+    document.getElementById('regPass2').classList.remove('field-error');
+    document.getElementById('regPass2').classList.add('field-ok');
+  } else {
+    msg.textContent = '✗ As senhas não coincidem';
+    msg.className = 'field-msg err';
+    document.getElementById('regPass2').classList.remove('field-ok');
+    document.getElementById('regPass2').classList.add('field-error');
+  }
+}
+
+function checkCpMatch() {
+  const p1 = document.getElementById('cp_new') ? document.getElementById('cp_new').value : '';
+  const p2 = document.getElementById('cp_new2') ? document.getElementById('cp_new2').value : '';
+  const msg = document.getElementById('cpMatchMsg');
+  if (!msg) return;
+  if (!p2) { msg.textContent=''; msg.className='field-msg'; return; }
+  if (p1 === p2) {
+    msg.textContent = '✓ As senhas coincidem';
+    msg.className = 'field-msg ok';
+  } else {
+    msg.textContent = '✗ As senhas não coincidem';
+    msg.className = 'field-msg err';
+  }
+}
+
+function togglePass(btn) {
+  const inp = btn.parentElement.querySelector('input');
+  inp.type = inp.type==='password'?'text':'password';
+  btn.textContent = inp.type==='password'?'👁':'🙈';
+}
+
+function copyMain(id) {
+  const it = state.items.find(i=>i.id===id);
+  if (!it) return;
+  const val = it.password || it.content || it.number || it.seed || it.privateKey || it.wallet || '';
+  if (val) { navigator.clipboard.writeText(val); toast('Copiado!','ok'); }
+}
+
+async function deleteItem(id) {
+  if (!confirm('Eliminar este item?')) return;
+  try {
+    await api('DELETE', '/items/'+id, null, true);
+    state.items = state.items.filter(i=>i.id!==id);
+    renderItems();
+    toast('Item eliminado','ok');
+  } catch(e) { toast(e.message,'err'); }
+}
+
+async function exportVault() {
+  const blob = new Blob([JSON.stringify(state.items,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'velorumsafe_backup_'+new Date().toISOString().slice(0,10)+'.vault';
+  a.click();
+  toast('Backup exportado','ok');
+}
+
+// ═══════════════════════════════════════
+// NEW/EDIT ITEM MODAL
+// ═══════════════════════════════════════
+function openNewItemModal() {
+  state.editingId = null;
+  document.getElementById('modalTitle').textContent = 'Novo item';
+  document.getElementById('modalBody').innerHTML = getTypeSelectorHTML();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function editItem(id) {
+  const it = state.items.find(i=>i.id===id);
+  if (!it) return;
+  state.editingId = id;
+  document.getElementById('modalTitle').textContent = 'Editar item';
+  document.getElementById('modalBody').innerHTML = getItemFormHTML(it.type, it);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function getTypeSelectorHTML() {
+  const types = [
+    {k:'senha',icon:'🔑',label:'Senha'},
+    {k:'nota',icon:'📝',label:'Nota'},
+    {k:'cartao',icon:'💳',label:'Cartão'},
+    {k:'identidade',icon:'🪪',label:'Identidade'},
+    {k:'crypto',icon:'₿',label:'Crypto'},
+    {k:'ssh',icon:'🖥️',label:'SSH/API'},
+  ];
+  return `<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Que tipo de item queres guardar?</p>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+  ${types.map(t=>`<button onclick="selectItemType('${t.k}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:20px 12px;cursor:pointer;text-align:center;transition:all 0.2s;font-family:'Inter',sans-serif;color:var(--text2)" onmouseover="this.style.borderColor='var(--cyan)';this.style.color='var(--cyan)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
+    <div style="font-size:1.8rem;margin-bottom:8px">${t.icon}</div>
+    <div style="font-size:12px;font-weight:700">${t.label}</div>
+  </button>`).join('')}
+  </div>`;
+}
+
+function selectItemType(type) {
+  document.getElementById('modalBody').innerHTML = getItemFormHTML(type, {});
+}
+
+function getItemFormHTML(type, data) {
+  const F = (id,label,placeholder,secret,value)=>`<div class="field"><label>${label}</label><input type="${secret?'password':'text'}" id="f_${id}" placeholder="${placeholder}" value="${esc(value||'')}"></div>`;
+  let html = F('title','Título','Nome do item',false,data.title||data.name);
+  if (type==='senha') {
+    html += F('username','Utilizador / Email','utilizador@email.com',false,data.username);
+    html += `<div class="field"><label>Senha</label><div style="position:relative"><input type="password" id="f_password" placeholder="A senha" value="${esc(data.password||'')}" oninput="updateStrength(this.value,'fStr','fStrL')"><button onclick="genPass()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif">⟳ Gerar</button></div><div class="strength-bar"><div class="strength-fill" id="fStr"></div></div><div class="strength-label" id="fStrL"></div></div>`;
+    html += F('url','URL (opcional)','https://site.com',false,data.url);
+    html += F('notes','Notas (opcional)','Informações adicionais',false,data.notes);
+  } else if (type==='nota') {
+    html += `<div class="field"><label>Conteúdo</label><textarea id="f_content" placeholder="Escreve aqui..." style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;resize:vertical;min-height:120px;transition:border 0.2s" onfocus="this.style.borderColor='var(--cyan)'" onblur="this.style.borderColor='var(--border)'">${esc(data.content||'')}</textarea></div>`;
+  } else if (type==='cartao') {
+    html += F('holder','Titular do cartão','Nome no cartão',false,data.holder);
+    html += F('number','Número do cartão','•••• •••• •••• ••••',true,data.number);
+    html += `<div class="field-row">${F('expiry','Validade','MM/AA',false,data.expiry)}${F('cvv','CVV','•••',true,data.cvv)}</div>`;
+    html += F('pin','PIN (opcional)','••••',true,data.pin);
+  } else if (type==='identidade') {
+    html += F('fullname','Nome completo','Nome e apelido',false,data.fullname);
+    html += F('docnum','BI / Passaporte','Número do documento',false,data.docnum);
+    html += `<div class="field-row">${F('nif','NIF','Número fiscal',false,data.nif)}${F('dob','Data de nascimento','DD/MM/AAAA',false,data.dob)}</div>`;
+    html += F('notes','Notas','Informações adicionais',false,data.notes);
+  } else if (type==='crypto') {
+    html += F('wallet','Endereço / Carteira','0x...',false,data.wallet);
+    html += F('seed','Seed phrase','12 ou 24 palavras',true,data.seed);
+    html += F('privkey','Chave privada','Chave privada',true,data.privkey);
+    html += F('exchange','Exchange (opcional)','Binance, Coinbase...',false,data.exchange);
+    html += F('notes','Notas','Informações adicionais',false,data.notes);
+  } else if (type==='ssh') {
+    html += F('host','Host / IP','192.168.1.1 ou servidor.com',false,data.host);
+    html += `<div class="field-row">${F('username','Utilizador','root',false,data.username)}${F('port','Porta','22',false,data.port)}</div>`;
+    html += F('password','Senha (opcional)','••••••••',true,data.password);
+    html += `<div class="field"><label>Chave privada (opcional)</label><textarea id="f_privateKey" placeholder="-----BEGIN RSA PRIVATE KEY-----" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:12px;font-family:'Fira Code',monospace;outline:none;resize:vertical;min-height:80px;transition:border 0.2s" onfocus="this.style.borderColor='var(--cyan)'" onblur="this.style.borderColor='var(--border)'">${esc(data.privateKey||'')}</textarea></div>`;
+    html += F('notes','Notas','Informações adicionais',false,data.notes);
+  }
+  html += `<button class="btn btn-primary" style="margin-top:8px" data-itype="${type}" onclick="saveItem(this.dataset.itype)">💾 Guardar item</button>`;
+  html += `<button class="btn btn-ghost" onclick="state.editingId?closeModal():openNewItemModal()">← Voltar</button>`;
+  return html;
+}
+
+function gv(id){ const el=document.getElementById('f_'+id); return el?el.value.trim():''; }
+
+async function saveItem(type) {
+  const titleEl = document.getElementById('f_title');
+  const title = titleEl ? titleEl.value.trim() : '';
+  if (!title) { 
+    if(titleEl){titleEl.classList.add('field-error');titleEl.focus();}
+    return toast('O título é obrigatório','err'); 
+  }
+  let data = { title, type };
+  if (type==='senha') { 
+    data.username=gv('username');
+    data.password=gv('password');
+    data.url=gv('url');
+    data.notes=gv('notes'); 
+  } else if (type==='nota') { 
+    const ta=document.getElementById('f_content');
+    data.content=ta?ta.value.trim():'';
+    if (!data.content) return toast('Escreve algo na nota','err');
+  } else if (type==='cartao') { 
+    if (!gv('number')) return toast('Número do cartão é obrigatório','err');
+    data.holder=gv('holder');data.number=gv('number');data.expiry=gv('expiry');data.cvv=gv('cvv');data.pin=gv('pin'); 
+  } else if (type==='identidade') { 
+    data.fullname=gv('fullname');data.docnum=gv('docnum');data.nif=gv('nif');data.dob=gv('dob');data.notes=gv('notes'); 
+  } else if (type==='crypto') { 
+    data.wallet=gv('wallet');data.seed=gv('seed');data.privkey=gv('privkey');data.exchange=gv('exchange');data.notes=gv('notes'); 
+  } else if (type==='ssh') { 
+    if (!gv('host')) return toast('Host é obrigatório','err');
+    data.host=gv('host');data.username=gv('username');data.port=gv('port')||'22';
+    data.password=gv('password');
+    const ta=document.getElementById('f_privateKey');
+    data.privateKey=ta?ta.value.trim():'';
+    data.notes=gv('notes'); 
+  }
+  try {
+    const blob = await encryptItem(data, state.cryptoKey);
+    // Mapear tipos para os valores aceites pelo servidor
+    const typeMap = { senha:'password', nota:'note', cartao:'password', identidade:'secret', crypto:'secret', ssh:'secret' };
+    const serverType = typeMap[type] || 'note';
+    const preview = data.title.substring(0,40);
+    if (state.editingId) {
+      await api('PUT', '/items/'+state.editingId, { encryptedData: blob, itemType: serverType, title: data.title, preview }, true);
+      const idx = state.items.findIndex(i=>i.id===state.editingId);
+      if (idx>-1) state.items[idx] = { ...data, id: state.editingId };
+    } else {
+      const res = await api('POST', '/items', { encryptedData: blob, itemType: serverType, title: data.title, preview }, true);
+      state.items.unshift({ ...data, id: res.id });
+    }
+    closeModal();
+    renderItems();
+    toast('Item guardado com sucesso!','ok');
+  } catch(e) { toast(e.message,'err'); }
+}
+
+// ═══════════════════════════════════════
+// PASSWORD STRENGTH
+// ═══════════════════════════════════════
+function calcStrength(p) {
+  let s=0;
+  if (p.length>=8) s++;
+  if (p.length>=12) s++;
+  if (/[A-Z]/.test(p)) s++;
+  if (/[0-9]/.test(p)) s++;
+  if (/[^A-Za-z0-9]/.test(p)) s++;
+  return s;
+}
+const strengthColors=['#ff4466','#ff7700','#ffcc00','#88dd00','#00ff88'];
+const strengthLabels=['Muito fraca','Fraca','Razoável','Boa','Forte'];
+
+function updateStrength(v,fillId,labelId) {
+  if (!v) return;
+  const s=calcStrength(v);
+  const fill=document.getElementById(fillId);
+  const lbl=document.getElementById(labelId);
+  if (fill) { fill.style.width=(s/5*100)+'%';fill.style.background=strengthColors[s-1]||strengthColors[0]; }
+  if (lbl) { lbl.textContent=strengthLabels[s-1]||'';lbl.style.color=strengthColors[s-1]||'var(--text3)'; }
+}
+
+function updateRegStrength() {
+  const v=document.getElementById('regPass').value;
+  updateStrength(v,'regStrengthFill','regStrengthLabel');
+}
+
+function genPass() {
+  const chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+  let p=''; for(let i=0;i<20;i++) p+=chars[Math.floor(Math.random()*chars.length)];
+  const inp=document.getElementById('f_password');
+  if (inp) { inp.value=p; inp.type='text'; updateStrength(p,'fStr','fStrL'); }
+}
+
+// ═══════════════════════════════════════
+// CHANGE PASSWORD
+// ═══════════════════════════════════════
+function showChangePassword() {
+  document.getElementById('navMenu').classList.remove('open');
+  document.getElementById('modalTitle').textContent = 'Mudar senha mestre';
+  document.getElementById('modalBody').innerHTML = `
+    <div class="field"><label>Senha atual</label><div style="position:relative"><input type="password" id="cp_old" placeholder="Senha atual" style="padding-right:52px"><button type="button" onclick="togglePassById('cp_old',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:18px;cursor:pointer">👁</button></div></div>
+    <div class="field"><label>Nova senha</label><div style="position:relative"><input type="password" id="cp_new" placeholder="Nova senha (mín. 8 car.)" oninput="updateStrength(this.value,'cpStr','cpStrL');checkCpMatch()" style="padding-right:52px"><button type="button" onclick="togglePassById('cp_new',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:18px;cursor:pointer">👁</button></div>
+      <div class="strength-bar"><div class="strength-fill" id="cpStr"></div></div>
+      <div class="strength-label" id="cpStrL"></div>
+    </div>
+    <div class="field"><label>Confirmar nova senha</label><div style="position:relative"><input type="password" id="cp_new2" placeholder="Confirma a nova senha" oninput="checkCpMatch()" style="padding-right:52px"><button type="button" onclick="togglePassById('cp_new2',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:18px;cursor:pointer">👁</button></div><div class="field-msg" id="cpMatchMsg"></div></div>
+    <button class="btn btn-primary" onclick="doChangePass()">Alterar senha</button>`;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+async function doChangePass() {
+  const old=document.getElementById('cp_old').value;
+  const nw=document.getElementById('cp_new').value;
+  const nw2=document.getElementById('cp_new2').value;
+  if (nw!==nw2) return toast('As senhas não coincidem','err');
+  if (nw.length<8) return toast('Mínimo 8 caracteres','err');
+  try {
+    const oldHash=await hashForServer(old,state.user.email);
+    const newHash=await hashForServer(nw,state.user.email);
+    const newKey=await deriveKey(nw,state.user.email);
+    const reencrypted=[];
+    for (const it of state.items) {
+      const blob=await encryptItem(it,newKey);
+      reencrypted.push({id:it.id,blob,type:it.type});
+    }
+    await api('PUT','/user/password',{oldHash,newHash,reencryptedItems:reencrypted},true);
+    state.cryptoKey=newKey;
+    closeModal();
+    toast('Senha alterada com sucesso!','ok');
+  } catch(e) { toast(e.message,'err'); }
+}
+
+// ═══════════════════════════════════════
+// OTP TIMER
+// ═══════════════════════════════════════
+let _otpInterval;
+function startOTPTimer() {
+  let secs=600;
+  clearInterval(_otpInterval);
+  _otpInterval=setInterval(()=>{
+    secs--;
+    const el=document.getElementById('otpSecs');
+    if (el) el.textContent=secs;
+    if (secs<=0) clearInterval(_otpInterval);
+  },1000);
+}
+
+// OTP single input
+function otpSingleInput() {
+  const inp = document.getElementById('otpSingleInput');
+  // só números
+  inp.value = inp.value.replace(/\D/g, '').substring(0, 6);
+  // auto-submit quando 6 dígitos
+  if (inp.value.length === 6) doOTP();
+}
+
+function otpInput(i) {
+  // legacy — não usado mas mantido para compatibilidade
+}
+function otpKey(i,e) {
+  // legacy
+}
+
+// ═══════════════════════════════════════
+// RECOVERY CODES
+// ═══════════════════════════════════════
+function showRecoveryCodes(codes) {
+  document.getElementById('recoveryCodes').innerHTML = codes.map(c=>`<div class="recovery-code">${c}</div>`).join('');
+  showView('recoveryView');
+}
+
+// ═══════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('vaultView').classList.remove('active');
+  // Limpar campos ao trocar de vista
+  if (id==='loginView') {
+    ['loginEmail','loginPass'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
+    ['loginEmailMsg','loginPassMsg'].forEach(f=>{const el=document.getElementById(f);if(el){el.textContent='';el.className='field-msg';}});
+    const eb=document.getElementById('loginErrBox');if(eb)eb.style.display='none';
+    // Limpar OTP
+    const oi = document.getElementById('otpSingleInput');
+    if(oi) oi.value = '';
+  }
+  if (id==='registerView') {
+    ['regName','regEmail','regPass','regPass2'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
+    const sf=document.getElementById('regStrengthFill');if(sf)sf.style.width='0';
+    const sl=document.getElementById('regStrengthLabel');if(sl)sl.textContent='';
+  }
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  state.editingId=null;
+}
+
+function toggleNavMenu() {
+  document.getElementById('navMenu').classList.toggle('open');
+}
+document.addEventListener('click', e=>{
+  if (!e.target.closest('.nav-user')) document.getElementById('navMenu').classList.remove('open');
+});
+
+let _toastTimeout;
+function toast(msg, type) {
+  const t=document.getElementById('toast');
+  const icon=document.getElementById('toastIcon');
+  const txt=document.getElementById('toastMsg');
+  icon.textContent=type==='ok'?'✓':'✕';
+  txt.textContent=msg;
+  t.className='show '+(type==='ok'?'ok':'err');
+  clearTimeout(_toastTimeout);
+  _toastTimeout=setTimeout(()=>t.className='',3000);
+}
+
+function esc(s='') { return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function setFieldState(inputId, msgId, type, msg) {
+  const inp = document.getElementById(inputId);
+  const msgEl = document.getElementById(msgId);
+  if (inp) { inp.classList.remove('field-error','field-ok'); if(type==='err') inp.classList.add('field-error'); if(type==='ok') inp.classList.add('field-ok'); }
+  if (msgEl) { msgEl.textContent=msg; msgEl.className='field-msg'+(type?' '+type:''); }
+}
+function clearFieldState(inputId, msgId) {
+  const inp=document.getElementById(inputId);
+  if(inp){inp.classList.remove('field-error','field-ok');}
+  const m=document.getElementById(msgId);
+  if(m){m.textContent='';m.className='field-msg';}
+  const errBox=document.getElementById('loginErrBox');
+  if(errBox)errBox.style.display='none';
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  loadTheme();
+  initTimer();
+});
+</script>
+</body>
+</html>
