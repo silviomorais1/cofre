@@ -28,6 +28,7 @@ const PORT = process.env.PORT || 3001;
 //  MIDDLEWARES GLOBAIS
 // ─────────────────────────────────────────
 app.use(helmet());
+app.set('trust proxy', 1);
 app.use(cors({
   origin: '*',
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
