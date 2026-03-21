@@ -1173,7 +1173,14 @@ async function saveItem(type) {
   else if (type==='identidade'){ data.fullname=gv('fullname');data.docnum=gv('docnum');data.nif=gv('nif');data.dob=gv('dob');data.notes=gv('notes'); }
   else if (type==='crypto'){ data.wallet=gv('wallet');data.seed=gv('seed');data.privkey=gv('privkey');data.exchange=gv('exchange');data.notes=gv('notes'); }
   else if (type==='ssh')   { if(!gv('host'))return toast('Host obrigatório','err');data.host=gv('host');data.username=gv('username');data.port=gv('port')||'22';data.password=gv('password');const ta=document.getElementById('f_privateKey');data.privateKey=ta?ta.value.trim():'';data.notes=gv('notes'); }
-  else if (type==='ficheiro'){ if(!_fileData&&!state.editingId)return toast('Selecciona um ficheiro','err');if(_fileData){data.fileData=_fileData;data.filename=_fileName;data.filesize=_fileSize;}data.notes=gv('notes');_fileData=null; }
+  else if (type==='ficheiro'){
+    // Check both _fileData variable and the preview element (in case of page reload)
+    const hasFile = _fileData !== null && _fileData !== undefined && _fileData !== '';
+    if (!hasFile && !state.editingId) return toast('Selecciona um ficheiro','err');
+    if (hasFile) { data.fileData=_fileData; data.filename=_fileName; data.filesize=_fileSize; }
+    data.notes=gv('notes');
+    _fileData=null; _fileName=''; _fileSize=''; _multiFiles=null;
+  }
   try {
     const blob = await encryptItem(data, state.cryptoKey);
     if (state.editingId) {
@@ -1317,7 +1324,7 @@ function showView(id) {
     const cm=document.getElementById('regConfirmMsg');if(cm)cm.innerHTML='';
   }
 }
-function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); state.editingId=null; _fileData=null; }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); state.editingId=null; _fileData=null; _fileName=''; _fileSize=''; _multiFiles=null; }
 function toggleNavMenu() { document.getElementById('navMenu').classList.toggle('open'); }
 document.addEventListener('click',e=>{if(!e.target.closest('.nav-user'))document.getElementById('navMenu').classList.remove('open');});
 let _toastT;
