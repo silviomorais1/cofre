@@ -6,90 +6,73 @@
 <title>VelorumSafe — Cofre Digital</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔒</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ── TEMAS (só afectam o cofre — não o auth) ── */
 :root{
-  --bg:#080e1a;
-  --bg2:#0d1525;
-  --bg3:#111d30;
-  --border:#1e3050;
-  --border2:#243a5e;
-  --cyan:#00d4ff;
-  --cyan2:#00a8cc;
-  --cyan-glow:rgba(0,212,255,0.15);
-  --cyan-glow2:rgba(0,212,255,0.08);
-  --text:#e8f4f8;
-  --text2:#8ba8c4;
-  --text3:#4a6580;
-  --red:#ff4466;
-  --yellow:#ffcc00;
-  --green:#00ff88;
-  --card:#0d1828;
-  --radius:12px;
-  --session:30;
+  --bg:#080e1a;--bg2:#0d1525;--bg3:#111d30;
+  --border:#1e3050;--border2:#243a5e;
+  --cyan:#00d4ff;--cyan2:#00a8cc;
+  --cyan-glow:rgba(0,212,255,0.15);--cyan-glow2:rgba(0,212,255,0.08);
+  --text:#e8f4f8;--text2:#8ba8c4;--text3:#4a6580;
+  --red:#ff4466;--yellow:#ffcc00;--green:#00ff88;
+  --card:#0d1828;--radius:12px;
+  /* Vault vars (escuro por defeito) */
+  --v-bg:#080e1a;--v-bg2:#0d1525;--v-bg3:#111d30;
+  --v-border:#1e3050;--v-border2:#243a5e;
+  --v-text:#e8f4f8;--v-text2:#8ba8c4;--v-text3:#4a6580;
+  --v-card:#0d1828;--v-nav:rgba(8,14,26,0.9);
+  --v-input-bg:#0d1525;--v-shadow:rgba(0,0,0,0.4);
 }
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;overflow-x:hidden}
+
+/* TEMA CLARO — só aplicado dentro do cofre (#vaultView e navbar) */
+body.vault-light #vaultView,
+body.vault-light #navbar {
+  --v-bg:#f0f4f8;--v-bg2:#ffffff;--v-bg3:#e8eef5;
+  --v-border:#c8d8e8;--v-border2:#a0b8d0;
+  --v-text:#0d1525;--v-text2:#2d4a6a;--v-text3:#5a7a9a;
+  --v-card:#ffffff;--v-nav:rgba(240,244,248,0.95);
+  --v-input-bg:#f8fafc;--v-shadow:rgba(0,50,100,0.1);
+}
+
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;overflow-x:hidden}
 body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(0,180,255,0.06) 0%,transparent 50%),var(--bg)}
 
 /* ── TIMER BAR ── */
-#timerBar{
-  position:fixed;top:0;left:0;right:0;height:3px;z-index:9999;
-  background:transparent;
-  transition:background 0.3s;
-}
-#timerBarFill{
-  height:100%;width:100%;
-  background:var(--cyan);
-  transform-origin:left;
-  transform:scaleX(1);
-  transition:transform 1s linear, background 0.5s;
-}
+#timerBar{position:fixed;top:0;left:0;right:0;height:3px;z-index:9999;background:transparent}
+#timerBarFill{height:100%;width:100%;background:var(--cyan);transform-origin:left;transform:scaleX(1);transition:transform 1s linear,background 0.5s}
 #timerBar.warn #timerBarFill{background:var(--yellow)}
 #timerBar.danger #timerBarFill{background:var(--red);animation:pulseBar 0.6s ease-in-out infinite alternate}
 @keyframes pulseBar{from{opacity:1}to{opacity:0.4}}
 
-/* ── COUNTDOWN BADGE ── */
+/* ── NAV ── */
+#navbar{position:fixed;top:0;left:0;right:0;height:56px;z-index:100;background:rgba(8,14,26,0.9);border-bottom:1px solid var(--border);backdrop-filter:blur(16px);display:none;align-items:center;justify-content:space-between;padding:0 24px}
+#navbar.active{display:flex}
+.nav-logo{display:flex;align-items:center;gap:10px;font-size:1.2rem;font-weight:800;letter-spacing:-0.5px}
+.nav-logo .v{color:#fff}.nav-logo .s{color:var(--cyan)}
+.nav-badge{background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--cyan);font-size:10px;font-family:'JetBrains Mono',monospace;padding:2px 8px;border-radius:20px;font-weight:600}
+.nav-right{display:flex;align-items:center;gap:10px}
+
+/* ── TIMER BADGE (ao lado do perfil) ── */
 #timerBadge{
-  position:fixed;top:14px;right:80px;z-index:9998;
-  background:rgba(13,24,40,0.9);
-  border:1px solid var(--border2);
-  border-radius:20px;
-  padding:4px 14px;
-  font-family:'JetBrains Mono',monospace;
-  font-size:12px;
-  color:var(--text2);
-  display:none;
-  backdrop-filter:blur(8px);
-  gap:6px;
-  align-items:center;
-  transition:all 0.3s;
+  display:none;align-items:center;gap:5px;
+  background:rgba(13,24,40,0.9);border:1px solid var(--border2);
+  border-radius:20px;padding:4px 12px;
+  font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2);
+  backdrop-filter:blur(8px);transition:all 0.3s;
 }
 #timerBadge.active{display:flex}
 #timerBadge.warn{color:var(--yellow);border-color:rgba(255,204,0,0.4);background:rgba(255,204,0,0.06)}
 #timerBadge.danger{color:var(--red);border-color:rgba(255,68,102,0.4);background:rgba(255,68,102,0.06);animation:pulseBadge 0.6s ease-in-out infinite alternate}
 @keyframes pulseBadge{from{opacity:1}to{opacity:0.5}}
-#timerDot{width:6px;height:6px;border-radius:50%;background:currentColor}
+#timerDot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
 
-/* ── NAV ── */
-#navbar{
-  position:fixed;top:0;left:0;right:0;height:56px;z-index:100;
-  background:rgba(8,14,26,0.85);
-  border-bottom:1px solid var(--border);
-  backdrop-filter:blur(16px);
-  display:none;align-items:center;justify-content:space-between;
-  padding:0 24px;
-}
-#navbar.active{display:flex}
-.nav-logo{display:flex;align-items:center;gap:10px;font-size:1.2rem;font-weight:800;letter-spacing:-0.5px}
-.nav-logo .lock{font-size:1.1rem}
-.nav-logo .v{color:#fff}.nav-logo .s{color:var(--cyan)}
-.nav-badge{background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--cyan);font-size:10px;font-family:'JetBrains Mono',monospace;padding:2px 8px;border-radius:20px;font-weight:600}
-.nav-right{display:flex;align-items:center;gap:16px}
 .nav-user{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);transition:all 0.2s;font-size:13px;color:var(--text2);position:relative}
 .nav-user:hover{border-color:var(--border2);color:var(--text)}
 .nav-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--cyan2),#0066aa);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
-.nav-menu{position:absolute;top:calc(100% + 8px);right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;min-width:180px;overflow:hidden;display:none;z-index:200}
+.nav-menu{position:absolute;top:calc(100% + 8px);right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;min-width:190px;overflow:hidden;display:none;z-index:200;box-shadow:0 8px 30px rgba(0,0,0,0.4)}
 .nav-menu.open{display:block}
 .nav-menu-item{padding:10px 16px;font-size:13px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:10px;transition:all 0.15s}
 .nav-menu-item:hover{background:var(--bg3);color:var(--text)}
@@ -100,106 +83,89 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
 /* ── VIEWS ── */
 .view{display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px}
 .view.active{display:flex}
-#vaultView{display:none;flex-direction:column;padding-top:56px}
+#vaultView{display:none;flex-direction:column;padding-top:64px}
 #vaultView.active{display:flex}
 
 /* ── AUTH CARD ── */
-.auth-card{
-  width:100%;max-width:420px;
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:20px;
-  padding:40px;
-  box-shadow:0 0 60px rgba(0,0,0,0.5),0 0 120px rgba(0,212,255,0.03);
-  animation:fadeUp 0.4s ease;
-}
+.auth-card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:40px;box-shadow:0 0 60px rgba(0,0,0,0.5),0 0 120px rgba(0,212,255,0.03);animation:fadeUp 0.4s ease}
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-.auth-logo{text-align:center;margin-bottom:32px}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-logo .lock-icon{font-size:2.2rem;margin-bottom:8px}
 .auth-logo .big{font-size:2rem;font-weight:800;letter-spacing:-1px}
 .auth-logo .big .v{color:#fff}.auth-logo .big .s{color:var(--cyan)}
 .auth-logo .sub{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:4px;letter-spacing:2px;text-transform:uppercase}
-.lock-icon{font-size:2.5rem;margin-bottom:8px}
-.auth-title{font-size:1.1rem;font-weight:700;margin-bottom:6px;color:var(--text)}
-.auth-sub{font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.5}
-.field{margin-bottom:16px}
+
+/* ── FIELDS ── */
+.field{margin-bottom:14px}
 .field label{display:block;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'JetBrains Mono',monospace}
-.field input{
-  width:100%;background:var(--bg2);border:1px solid var(--border);
-  border-radius:10px;padding:12px 16px;
-  color:var(--text);font-size:14px;font-family:'Syne',sans-serif;
-  outline:none;transition:all 0.2s;
-}
-.field input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-glow2)}
-.field input::placeholder{color:var(--text3)}
+.field input,.field textarea{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:all 0.2s}
+.field input:focus,.field textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-glow2)}
+.field input::placeholder,.field textarea::placeholder{color:var(--text3)}
 .field input.field-error{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(255,68,102,0.12)!important}
 .field input.field-ok{border-color:var(--green)!important;box-shadow:0 0 0 3px rgba(0,255,136,0.08)!important}
 .field-msg{font-size:11px;margin-top:5px;font-family:'JetBrains Mono',monospace;min-height:14px}
 .field-msg.err{color:var(--red)}.field-msg.ok{color:var(--green)}
-.btn{
-  display:block;width:100%;padding:14px;border:none;border-radius:10px;cursor:pointer;
-  font-family:'Syne',sans-serif;font-size:15px;font-weight:700;
-  transition:all 0.2s;margin-top:4px;text-align:center;
-  -webkit-appearance:none;appearance:none;
-}
-.btn-primary{
-  background:linear-gradient(135deg,#00d4ff,#00a8cc) !important;
-  color:#000 !important;
-  font-weight:700 !important;
-  border:none !important;
-  box-shadow:0 2px 12px rgba(0,212,255,0.2);
-}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,212,255,0.35) !important}
+
+/* ── PASSWORD INPUT WITH EYE ── */
+.pass-wrap{position:relative}
+.pass-wrap input{padding-right:44px!important}
+.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--text3);padding:0;line-height:1;transition:color 0.2s}
+.eye-btn:hover{color:var(--cyan)}
+
+/* ── STRENGTH BAR ── */
+.strength-bar{height:3px;border-radius:2px;background:var(--border);margin-top:8px;overflow:hidden}
+.strength-fill{height:100%;border-radius:2px;width:0;transition:all 0.3s}
+.strength-label{font-size:11px;font-family:'JetBrains Mono',monospace;margin-top:4px;min-height:14px}
+
+/* ── CONFIRM FEEDBACK ── */
+.confirm-msg{font-size:11px;font-family:'JetBrains Mono',monospace;margin-top:5px;min-height:14px;display:flex;align-items:center;gap:5px}
+
+/* ── BUTTONS ── */
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:10px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;transition:all 0.2s;margin-top:4px;text-align:center;-webkit-appearance:none;appearance:none}
+.btn-primary{background:linear-gradient(135deg,#00d4ff,#00a8cc)!important;color:#000!important;font-weight:700!important;border:none!important;box-shadow:0 2px 12px rgba(0,212,255,0.2)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,212,255,0.35)!important}
 .btn-primary:active{transform:translateY(0)}
-.btn-primary:disabled{opacity:0.6;cursor:not-allowed;transform:none;box-shadow:none !important}
+.btn-primary:disabled{opacity:0.6;cursor:not-allowed;transform:none!important;box-shadow:none!important}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);margin-top:12px}
 .btn-ghost:hover{border-color:var(--border2);color:var(--text)}
 .auth-link{text-align:center;margin-top:16px;font-size:13px;color:var(--text3)}
 .auth-link a{color:var(--cyan);cursor:pointer;text-decoration:none}
 .auth-link a:hover{text-decoration:underline}
 
+/* ── ERR BOX ── */
+.err-box{display:none;margin-bottom:12px;padding:10px 14px;background:rgba(255,68,102,0.08);border:1px solid rgba(255,68,102,0.3);border-radius:10px;font-size:13px;color:var(--red);line-height:1.4}
+
+/* ── ALERT ── */
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;line-height:1.5}
+.alert-warn{background:rgba(255,204,0,0.08);border:1px solid rgba(255,204,0,0.3);color:#ffcc00}
+
 /* ── OTP ── */
 .otp-inputs{display:flex;gap:8px;justify-content:center;margin:20px 0}
-.otp-inputs input{
-  width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;
-  font-family:'JetBrains Mono',monospace;
-  background:var(--bg2);border:2px solid var(--border);border-radius:10px;
-  color:var(--text);outline:none;transition:all 0.2s;
-}
+.otp-inputs input{width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;background:var(--bg2);border:2px solid var(--border);border-radius:10px;color:var(--text);outline:none;transition:all 0.2s}
 .otp-inputs input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-glow2)}
 .otp-timer{text-align:center;font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:8px}
 
-/* ── RECOVERY CODES ── */
+/* ── RECOVERY ── */
 .recovery-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
 .recovery-code{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--cyan);text-align:center;letter-spacing:2px}
-.alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;line-height:1.5}
-.alert-warn{background:rgba(255,204,0,0.08);border:1px solid rgba(255,204,0,0.3);color:#ffcc00}
-.alert-info{background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);color:var(--text2)}
-.alert-success{background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.2);color:var(--green)}
 
 /* ── VAULT ── */
-#vaultMain{flex:1;padding:24px;max-width:1100px;margin:0 auto;width:100%}
-.vault-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+#vaultMain{flex:1;padding:20px 24px;max-width:1200px;margin:0 auto;width:100%}
+.vault-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
 .search-box{flex:1;min-width:200px;position:relative}
-.search-box input{
-  width:100%;background:var(--bg2);border:1px solid var(--border);
-  border-radius:10px;padding:10px 16px 10px 42px;
-  color:var(--text);font-size:14px;font-family:'Syne',sans-serif;outline:none;transition:all 0.2s;
-}
+.search-box input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 16px 10px 40px;color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:all 0.2s}
 .search-box input:focus{border-color:var(--border2)}
-.search-box::before{content:"⌕";position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none}
+.search-box::before{content:"⌕";position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none}
 .filter-tabs{display:flex;gap:6px;flex-wrap:wrap}
-.ftab{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'Syne',sans-serif}
+.ftab{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:8px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif}
 .ftab:hover{border-color:var(--border2);color:var(--text)}
 .ftab.active{background:rgba(0,212,255,0.1);border-color:var(--cyan);color:var(--cyan)}
-.btn-new{background:linear-gradient(135deg,var(--cyan),var(--cyan2));color:#fff;border:none;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-family:'Syne',sans-serif}
+.btn-new{background:linear-gradient(135deg,var(--cyan),var(--cyan2));color:#000;border:none;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-family:'Outfit',sans-serif}
 .btn-new:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(0,212,255,0.25)}
 
 /* ── ITEMS GRID ── */
-.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
-.item-card{
-  background:var(--card);border:1px solid var(--border);border-radius:14px;
-  padding:18px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;
-}
+.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.item-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
 .item-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity 0.2s}
 .item-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,0.3)}
 .item-card:hover::before{opacity:1}
@@ -209,65 +175,84 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
 .item-card[data-type="identidade"]::before{background:var(--green)}
 .item-card[data-type="crypto"]::before{background:#f97316}
 .item-card[data-type="ssh"]::before{background:#ec4899}
-.item-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.item-card[data-type="ficheiro"]::before{background:#60a5fa}
+.item-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .item-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.item-icon.senha{background:rgba(0,212,255,0.1)}
-.item-icon.nota{background:rgba(255,204,0,0.1)}
-.item-icon.cartao{background:rgba(168,85,247,0.1)}
-.item-icon.identidade{background:rgba(0,255,136,0.1)}
-.item-icon.crypto{background:rgba(249,115,22,0.1)}
-.item-icon.ssh{background:rgba(236,72,153,0.1)}
+.item-icon.senha{background:rgba(0,212,255,0.1)}.item-icon.nota{background:rgba(255,204,0,0.1)}.item-icon.cartao{background:rgba(168,85,247,0.1)}.item-icon.identidade{background:rgba(0,255,136,0.1)}.item-icon.crypto{background:rgba(249,115,22,0.1)}.item-icon.ssh{background:rgba(236,72,153,0.1)}.item-icon.ficheiro{background:rgba(96,165,250,0.1)}
 .item-title{font-size:14px;font-weight:700;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .item-type-badge{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:2px 8px;background:var(--bg2);border-radius:20px}
-.item-preview{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-preview{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item-actions{display:flex;gap:6px;justify-content:flex-end}
-.ia{padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:11px;cursor:pointer;font-family:'Syne',sans-serif;transition:all 0.15s}
+.ia{padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all 0.15s}
 .ia:hover{border-color:var(--border2);color:var(--text)}
 .ia.del:hover{border-color:rgba(255,68,102,0.4);color:var(--red);background:rgba(255,68,102,0.05)}
 .empty-state{grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--text3)}
 .empty-state .e-icon{font-size:3rem;margin-bottom:16px;opacity:0.3}
-.empty-state p{font-size:14px;margin-top:8px}
 
 /* ── MODAL ── */
-#modalOverlay{
-  position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;
-  display:none;align-items:center;justify-content:center;padding:20px;
-  backdrop-filter:blur(4px);
-}
+#modalOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
 #modalOverlay.open{display:flex}
-.modal{
-  background:var(--bg2);border:1px solid var(--border2);border-radius:18px;
-  width:100%;max-width:480px;max-height:90vh;overflow-y:auto;
-  animation:fadeUp 0.25s ease;
-}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:18px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;animation:fadeUp 0.25s ease}
 .modal-header{padding:24px 24px 0;display:flex;align-items:center;justify-content:space-between}
 .modal-title{font-size:1rem;font-weight:700;color:var(--text)}
 .modal-close{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px;border-radius:6px;transition:color 0.15s}
 .modal-close:hover{color:var(--text)}
 .modal-body{padding:20px 24px 24px}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.strength-bar{height:3px;border-radius:2px;background:var(--border);margin-top:6px;overflow:hidden}
-.strength-fill{height:100%;border-radius:2px;transition:all 0.3s}
-.strength-label{font-size:10px;font-family:'JetBrains Mono',monospace;margin-top:4px}
-.gen-btn{position:relative;cursor:pointer}
-.gen-btn::after{content:"⟳ Gerar";position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--cyan);cursor:pointer;pointer-events:none}
+
+/* ── FILE UPLOAD ── */
+.file-drop{border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:12px}
+.file-drop:hover,.file-drop.drag{border-color:var(--cyan);background:var(--cyan-glow2)}
+.file-drop .fi{font-size:2rem;margin-bottom:8px}
+.file-drop p{font-size:13px;color:var(--text2)}
+.file-drop small{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.file-info{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text2);display:none;word-break:break-all}
+.file-info.show{display:block}
 
 /* ── TOAST ── */
-#toast{
-  position:fixed;bottom:24px;right:24px;z-index:9999;
-  background:var(--bg2);border:1px solid var(--border2);
-  border-radius:12px;padding:14px 18px;
-  display:flex;align-items:center;gap:10px;
-  font-size:13px;color:var(--text);
-  box-shadow:0 8px 30px rgba(0,0,0,0.4);
-  transform:translateY(80px);opacity:0;
-  transition:all 0.3s;max-width:320px;
-}
+#toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);box-shadow:0 8px 30px rgba(0,0,0,0.4);transform:translateY(80px);opacity:0;transition:all 0.3s;max-width:320px}
 #toast.show{transform:translateY(0);opacity:1}
 #toast.ok{border-color:rgba(0,255,136,0.3)}
 #toast.err{border-color:rgba(255,68,102,0.3)}
 
-/* ── SCROLLBAR ── */
+/* ── VAULT LIGHT THEME ── */
+body.vault-light #vaultView { background:#f0f4f8; }
+body.vault-light #navbar { background:rgba(240,244,248,0.97)!important; border-bottom-color:#c0d0e0!important; }
+body.vault-light .nav-logo .v { color:#0d1525!important; }
+body.vault-light .nav-user { background:#fff!important; border-color:#c8d8e8!important; color:#2d4a6a!important; }
+body.vault-light .nav-user:hover { border-color:#a0b8d0!important; color:#0d1525!important; }
+body.vault-light .nav-menu { background:#fff!important; border-color:#c8d8e8!important; box-shadow:0 8px 30px rgba(0,50,100,0.12)!important; }
+body.vault-light .nav-menu-item { color:#2d4a6a!important; }
+body.vault-light .nav-menu-item:hover { background:#f0f4f8!important; color:#0d1525!important; }
+body.vault-light .nav-menu-sep { background:#c8d8e8!important; }
+body.vault-light #timerBadge { background:rgba(255,255,255,0.9)!important; border-color:#c8d8e8!important; color:#2d4a6a!important; }
+body.vault-light #vaultMain { background:#f0f4f8; }
+body.vault-light .vault-toolbar .search-box input { background:#fff!important; border-color:#c8d8e8!important; color:#0d1525!important; }
+body.vault-light .search-box input::placeholder { color:#5a7a9a!important; }
+body.vault-light .ftab { background:#fff!important; border-color:#c8d8e8!important; color:#2d4a6a!important; }
+body.vault-light .ftab:hover { border-color:#a0b8d0!important; color:#0d1525!important; }
+body.vault-light .ftab.active { background:rgba(0,168,204,0.1)!important; border-color:var(--cyan2)!important; color:var(--cyan2)!important; }
+body.vault-light .item-card { background:#fff!important; border-color:#d0e0f0!important; box-shadow:0 2px 8px rgba(0,50,100,0.06); }
+body.vault-light .item-card:hover { border-color:#a0b8d0!important; box-shadow:0 6px 20px rgba(0,50,100,0.1)!important; }
+body.vault-light .item-title { color:#0d1525!important; }
+body.vault-light .item-type-badge { background:#f0f4f8!important; color:#5a7a9a!important; }
+body.vault-light .item-preview { color:#5a7a9a!important; }
+body.vault-light .ia { border-color:#c8d8e8!important; color:#5a7a9a!important; background:#f8fafc!important; }
+body.vault-light .ia:hover { border-color:#a0b8d0!important; color:#0d1525!important; }
+body.vault-light .ia.del:hover { border-color:rgba(255,68,102,0.4)!important; color:var(--red)!important; background:rgba(255,68,102,0.05)!important; }
+body.vault-light #vaultView .empty-state { color:#5a7a9a!important; }
+body.vault-light .modal { background:#fff!important; border-color:#c8d8e8!important; }
+body.vault-light .modal-title { color:#0d1525!important; }
+body.vault-light .modal-close { color:#5a7a9a!important; }
+body.vault-light .field label { color:#5a7a9a!important; }
+body.vault-light .field input, body.vault-light .field textarea { background:#f8fafc!important; border-color:#c8d8e8!important; color:#0d1525!important; }
+body.vault-light .field input:focus, body.vault-light .field textarea:focus { border-color:var(--cyan2)!important; box-shadow:0 0 0 3px rgba(0,168,204,0.12)!important; }
+body.vault-light .field input::placeholder { color:#5a7a9a!important; }
+body.vault-light .strength-bar { background:#dde8f0!important; }
+body.vault-light .eye-btn { color:#5a7a9a!important; }
+body.vault-light #timerBar { background:#f0f4f8; }
+body.vault-light .item-icon.senha{background:rgba(0,168,204,0.1)} body.vault-light .item-icon.nota{background:rgba(200,150,0,0.1)} body.vault-light .item-icon.cartao{background:rgba(130,60,200,0.1)} body.vault-light .item-icon.identidade{background:rgba(0,160,80,0.1)} body.vault-light .item-icon.crypto{background:rgba(200,90,0,0.1)} body.vault-light .item-icon.ssh{background:rgba(180,40,120,0.1)} body.vault-light .item-icon.ficheiro{background:rgba(40,100,200,0.1)}
+
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
@@ -275,25 +260,26 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
 </head>
 <body>
 
-<!-- Smart inactivity timer bar -->
 <div id="timerBar"><div id="timerBarFill"></div></div>
-<div id="timerBadge"><span id="timerDot"></span><span id="timerCount"></span></div>
 
-<!-- Navbar -->
 <nav id="navbar">
   <div class="nav-logo">
-    <span class="lock">🔒</span>
+    <span>🔒</span>
     <span><span class="v">Velorum</span><span class="s">Safe</span></span>
-    <span class="nav-badge">v2.0</span>
+    <span class="nav-badge">v2.1</span>
   </div>
   <div class="nav-right">
+    <!-- Timer ao lado do perfil -->
+    <div id="timerBadge"><span id="timerDot"></span><span id="timerCount">00:30</span></div>
     <div class="nav-user" onclick="toggleNavMenu()">
       <div class="nav-avatar" id="navAvatar">S</div>
       <span id="navName">Utilizador</span>
-      <span>▾</span>
+      <span style="font-size:10px">▾</span>
       <div class="nav-menu" id="navMenu">
         <div class="nav-menu-item" onclick="showChangePassword()">🔑 Mudar senha</div>
         <div class="nav-menu-item" onclick="exportVault()">📤 Exportar cofre</div>
+        <div class="nav-menu-item" onclick="importVault()">📥 Importar backup</div>
+        <div class="nav-menu-item" id="themeToggleBtn" onclick="toggleTheme()">☀️ Modo claro</div>
         <div class="nav-menu-sep"></div>
         <div class="nav-menu-item danger" onclick="doLogout()">🚪 Sair</div>
       </div>
@@ -301,15 +287,14 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
   </div>
 </nav>
 
-<!-- LOGIN VIEW -->
+<!-- LOGIN -->
 <div class="view active" id="loginView">
   <div class="auth-card">
     <div class="auth-logo">
       <div class="lock-icon">🔒</div>
       <div class="big"><span class="v">Velorum</span><span class="s">Safe</span></div>
-      <div class="sub">Cofre Digital Seguro</div>
+      <div class="sub">Faça o seu login aqui</div>
     </div>
-    <div id="loginAlert" style="display:none" class="alert alert-info" id="loginAlert"></div>
     <div class="field">
       <label>Email</label>
       <input type="text" id="loginEmail" placeholder="o_teu@email.com" autocomplete="username" oninput="clearFieldState('loginEmail','loginEmailMsg')">
@@ -317,20 +302,23 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
     </div>
     <div class="field">
       <label>Senha mestre</label>
-      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" oninput="clearFieldState('loginPass','loginPassMsg')" onkeydown="if(event.key==='Enter')doLogin()">
+      <div class="pass-wrap">
+        <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" oninput="clearFieldState('loginPass','loginPassMsg')" onkeydown="if(event.key==='Enter')doLogin()">
+        <button type="button" class="eye-btn" onclick="toggleEye('loginPass',this)" tabindex="-1">👁</button>
+      </div>
       <div class="field-msg" id="loginPassMsg"></div>
     </div>
-    <div id="loginErrBox" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(255,68,102,0.08);border:1px solid rgba(255,68,102,0.3);border-radius:10px;font-size:13px;color:var(--red)"></div>
+    <div class="err-box" id="loginErrBox"></div>
     <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Entrar</button>
     <div class="auth-link">Não tens conta? <a onclick="showView('registerView')">Criar conta</a></div>
   </div>
 </div>
 
-<!-- REGISTER VIEW -->
+<!-- REGISTER -->
 <div class="view" id="registerView">
   <div class="auth-card">
     <div class="auth-logo">
-      <div class="lock-icon">✨</div>
+      <div class="lock-icon">🔒</div>
       <div class="big"><span class="v">Velorum</span><span class="s">Safe</span></div>
       <div class="sub">Criar conta</div>
     </div>
@@ -344,20 +332,27 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
     </div>
     <div class="field">
       <label>Senha mestre</label>
-      <input type="password" id="regPass" placeholder="Mínimo 8 caracteres" autocomplete="new-password" oninput="updateRegStrength()">
-      <div class="strength-bar"><div class="strength-fill" id="regStrengthFill"></div></div>
-      <div class="strength-label" id="regStrengthLabel" style="color:var(--text3)"></div>
+      <div class="pass-wrap">
+        <input type="password" id="regPass" placeholder="Mínimo 8 caracteres" autocomplete="new-password" oninput="onRegPassInput()">
+        <button type="button" class="eye-btn" onclick="toggleEye('regPass',this)" tabindex="-1">👁</button>
+      </div>
+      <div class="strength-bar"><div class="strength-fill" id="regStrFill"></div></div>
+      <div class="strength-label" id="regStrLabel"></div>
     </div>
     <div class="field">
       <label>Confirmar senha</label>
-      <input type="password" id="regPass2" placeholder="Repete a senha" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()">
+      <div class="pass-wrap">
+        <input type="password" id="regPass2" placeholder="Repete a senha" autocomplete="new-password" oninput="onRegPass2Input()" onkeydown="if(event.key==='Enter')doRegister()">
+        <button type="button" class="eye-btn" onclick="toggleEye('regPass2',this)" tabindex="-1">👁</button>
+      </div>
+      <div class="confirm-msg" id="regConfirmMsg"></div>
     </div>
-    <button class="btn btn-primary" onclick="doRegister()">Criar conta</button>
+    <button class="btn btn-primary" id="regBtn" onclick="doRegister()">Criar conta</button>
     <div class="auth-link">Já tens conta? <a onclick="showView('loginView')">Entrar</a></div>
   </div>
 </div>
 
-<!-- OTP VIEW -->
+<!-- OTP -->
 <div class="view" id="otpView">
   <div class="auth-card">
     <div class="auth-logo">
@@ -368,21 +363,21 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
     <p style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:4px">Código enviado para</p>
     <p style="font-size:14px;font-weight:700;text-align:center;color:var(--cyan);margin-bottom:20px;font-family:'JetBrains Mono',monospace" id="otpEmailDisplay"></p>
     <div class="otp-inputs">
-      <input type="text" maxlength="1" class="otp-digit" id="d0" oninput="otpInput(0)" onkeydown="otpKey(0,event)">
-      <input type="text" maxlength="1" class="otp-digit" id="d1" oninput="otpInput(1)" onkeydown="otpKey(1,event)">
-      <input type="text" maxlength="1" class="otp-digit" id="d2" oninput="otpInput(2)" onkeydown="otpKey(2,event)">
-      <input type="text" maxlength="1" class="otp-digit" id="d3" oninput="otpInput(3)" onkeydown="otpKey(3,event)">
-      <input type="text" maxlength="1" class="otp-digit" id="d4" oninput="otpInput(4)" onkeydown="otpKey(4,event)">
-      <input type="text" maxlength="1" class="otp-digit" id="d5" oninput="otpInput(5)" onkeydown="otpKey(5,event)">
+      <input type="text" maxlength="1" id="d0" oninput="otpInput(0)" onkeydown="otpKey(0,event)">
+      <input type="text" maxlength="1" id="d1" oninput="otpInput(1)" onkeydown="otpKey(1,event)">
+      <input type="text" maxlength="1" id="d2" oninput="otpInput(2)" onkeydown="otpKey(2,event)">
+      <input type="text" maxlength="1" id="d3" oninput="otpInput(3)" onkeydown="otpKey(3,event)">
+      <input type="text" maxlength="1" id="d4" oninput="otpInput(4)" onkeydown="otpKey(4,event)">
+      <input type="text" maxlength="1" id="d5" oninput="otpInput(5)" onkeydown="otpKey(5,event)">
     </div>
-    <div class="otp-timer" id="otpTimerDisp">Válido por <span id="otpSecs">600</span>s</div>
+    <div class="otp-timer">Válido por <span id="otpSecs">600</span>s</div>
     <button class="btn btn-primary" onclick="doOTP()">Verificar código</button>
     <button class="btn btn-ghost" onclick="resendOTP()">Reenviar código</button>
-    <div class="auth-link"><a onclick="showView('loginView')">← Voltar ao login</a></div>
+    <div class="auth-link"><a onclick="showView('loginView')">← Voltar</a></div>
   </div>
 </div>
 
-<!-- RECOVERY CODES VIEW -->
+<!-- RECOVERY CODES -->
 <div class="view" id="recoveryView">
   <div class="auth-card" style="max-width:480px">
     <div class="auth-logo">
@@ -390,18 +385,18 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
       <div class="big"><span class="v">Velorum</span><span class="s">Safe</span></div>
       <div class="sub">Códigos de recuperação</div>
     </div>
-    <div class="alert alert-warn">⚠️ Guarda estes códigos num lugar seguro. Cada um só pode ser usado uma vez para recuperar o acesso caso percas a senha.</div>
+    <div class="alert alert-warn">⚠️ Guarda estes códigos num lugar seguro. Cada um só pode ser usado uma vez.</div>
     <div class="recovery-grid" id="recoveryCodes"></div>
-    <button class="btn btn-primary" onclick="proceedToVault()" style="margin-top:8px">Guardei os códigos — Entrar no cofre</button>
+    <button class="btn btn-primary" onclick="proceedToVault()" style="margin-top:8px">Guardei — Entrar no cofre</button>
   </div>
 </div>
 
-<!-- VAULT VIEW -->
+<!-- VAULT -->
 <div id="vaultView">
   <div id="vaultMain">
     <div class="vault-toolbar">
       <div class="search-box">
-        <input type="text" placeholder="Pesquisar no cofre..." id="searchInput" oninput="filterItems()">
+        <input type="text" placeholder="Pesquisar no cofre..." id="searchInput" oninput="renderItems()">
       </div>
       <div class="filter-tabs">
         <button class="ftab active" onclick="setFilter('todos',this)">Todos</button>
@@ -411,6 +406,7 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
         <button class="ftab" onclick="setFilter('identidade',this)">Identidade</button>
         <button class="ftab" onclick="setFilter('crypto',this)">Crypto</button>
         <button class="ftab" onclick="setFilter('ssh',this)">SSH/API</button>
+        <button class="ftab" onclick="setFilter('ficheiro',this)">Ficheiro</button>
       </div>
       <button class="btn-new" onclick="openNewItemModal()">+ Novo item</button>
     </div>
@@ -429,119 +425,110 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
   </div>
 </div>
 
-<!-- TOAST -->
 <div id="toast"><span id="toastIcon"></span><span id="toastMsg"></span></div>
 
 <script>
-// ═══════════════════════════════════════
+// ═══════════════════════════════
 // CONFIG
-// ═══════════════════════════════════════
+// ═══════════════════════════════
 const API = 'https://velorumsafe-production.up.railway.app/api';
-const SESSION_SECONDS = 30; // tempo de inatividade antes de encerrar
+const SESSION_SECONDS = 30;
 
-// ═══════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════
 let state = {
-  token: null,
-  user: null,
-  cryptoKey: null,
-  items: [],
-  filter: 'todos',
-  editingId: null,
-  pendingEmail: null,
-  pendingPass: null,
+  token:null, user:null, cryptoKey:null,
+  items:[], filter:'todos', editingId:null,
+  pendingEmail:null, pendingPass:null,
 };
 
-// ═══════════════════════════════════════
-// SMART INACTIVITY TIMER
-// ═══════════════════════════════════════
-let _timerSeconds = SESSION_SECONDS;
-let _timerInterval = null;
-let _timerActive = false;
-let _timerFill = null;
-let _timerBar = null;
-let _timerBadge = null;
-let _timerCount = null;
+// ═══════════════════════════════
+// THEME — por utilizador, persiste entre sessões
+// ═══════════════════════════════
+function getThemeKey(email) { return 'vs_theme_' + (email || state.user?.email || 'default'); }
 
-function initTimer() {
-  _timerFill = document.getElementById('timerBarFill');
-  _timerBar = document.getElementById('timerBar');
-  _timerBadge = document.getElementById('timerBadge');
-  _timerCount = document.getElementById('timerCount');
-
-  // Eventos de atividade do utilizador
-  const events = ['mousemove','mousedown','keydown','keypress','scroll','touchstart','touchmove','click','wheel'];
-  events.forEach(e => document.addEventListener(e, onUserActivity, { passive: true }));
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.body.classList.add('vault-light');
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.textContent = '🌙 Modo escuro';
+  } else {
+    document.body.classList.remove('vault-light');
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.textContent = '☀️ Modo claro';
+  }
 }
 
-function onUserActivity() {
-  if (!_timerActive) return;
-  resetTimer();
+function loadUserTheme(email) {
+  // Carregar tema do utilizador — usa o email para buscar a preferência guardada
+  const key = getThemeKey(email);
+  const saved = localStorage.getItem(key) || 'dark';
+  applyTheme(saved);
+}
+
+function toggleTheme() {
+  document.getElementById('navMenu').classList.remove('open');
+  const isLight = document.body.classList.contains('vault-light');
+  const newTheme = isLight ? 'dark' : 'light';
+  // Guardar com o email do utilizador actual
+  localStorage.setItem(getThemeKey(), newTheme);
+  applyTheme(newTheme);
+  toast(newTheme === 'light' ? '☀️ Modo claro activado' : '🌙 Modo escuro activado', 'ok');
+}
+
+// ═══════════════════════════════
+// TIMER — ao lado do perfil
+// ═══════════════════════════════
+let _ts = SESSION_SECONDS, _ti = null, _ta = false;
+let _tFill, _tBar, _tBadge, _tCount;
+
+function initTimer() {
+  _tFill  = document.getElementById('timerBarFill');
+  _tBar   = document.getElementById('timerBar');
+  _tBadge = document.getElementById('timerBadge');
+  _tCount = document.getElementById('timerCount');
+  ['mousemove','mousedown','keydown','scroll','touchstart','click','wheel'].forEach(e =>
+    document.addEventListener(e, () => { if (_ta) { _ts = SESSION_SECONDS; updateTimerUI(); } }, {passive:true})
+  );
 }
 
 function startTimer() {
-  _timerActive = true;
-  _timerSeconds = SESSION_SECONDS;
+  _ta = true; _ts = SESSION_SECONDS;
   updateTimerUI();
-  clearInterval(_timerInterval);
-  _timerInterval = setInterval(tickTimer, 1000);
+  clearInterval(_ti);
+  _ti = setInterval(() => {
+    if (!_ta) return;
+    _ts--;
+    if (_ts <= 0) { stopTimer(); doLogout(true); return; }
+    updateTimerUI();
+  }, 1000);
 }
 
 function stopTimer() {
-  _timerActive = false;
-  clearInterval(_timerInterval);
-  _timerBar.className = '';
-  _timerBadge.className = '';
-  _timerFill.style.transform = 'scaleX(1)';
-}
-
-function resetTimer() {
-  _timerSeconds = SESSION_SECONDS;
-  updateTimerUI();
-}
-
-function tickTimer() {
-  if (!_timerActive) return;
-  _timerSeconds--;
-  if (_timerSeconds <= 0) {
-    stopTimer();
-    doLogout(true);
-    return;
-  }
-  updateTimerUI();
+  _ta = false; clearInterval(_ti);
+  _tBar.className = ''; _tBadge.className = '';
+  _tFill.style.transform = 'scaleX(1)';
 }
 
 function updateTimerUI() {
-  const pct = _timerSeconds / SESSION_SECONDS;
-  _timerFill.style.transform = `scaleX(${pct})`;
-  
-  // Sempre mostrar badge MM:SS quando cofre ativo
-  const m = Math.floor(_timerSeconds / 60);
-  const s = _timerSeconds % 60;
-  _timerCount.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  _timerBadge.className = 'active';
-  _timerBar.className = '';
-
-  if (_timerSeconds <= 8) {
-    _timerBar.classList.add('danger');
-    _timerBadge.classList.add('danger');
-  } else if (_timerSeconds <= 15) {
-    _timerBar.classList.add('warn');
-    _timerBadge.classList.add('warn');
-  }
+  const pct = _ts / SESSION_SECONDS;
+  _tFill.style.transform = `scaleX(${pct})`;
+  const m = Math.floor(_ts/60), s = _ts%60;
+  _tCount.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  _tBadge.className = 'active';
+  _tBar.className = '';
+  if (_ts <= 8) { _tBar.classList.add('danger'); _tBadge.classList.add('danger'); }
+  else if (_ts <= 15) { _tBar.classList.add('warn'); _tBadge.classList.add('warn'); }
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════
 // CRYPTO
-// ═══════════════════════════════════════
+// ═══════════════════════════════
 async function deriveKey(password, emailSalt) {
   const enc = new TextEncoder();
   const salt = enc.encode(emailSalt.toLowerCase() + ':velorumsafe:v2');
   const km = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' },
-    km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+    {name:'PBKDF2', salt, iterations:600000, hash:'SHA-256'},
+    km, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']
   );
 }
 
@@ -550,8 +537,8 @@ async function hashForServer(password, email) {
   const salt = enc.encode('server:' + email.toLowerCase());
   const km = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
   const key = await crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
-    km, { name: 'AES-GCM', length: 256 }, true, ['encrypt']
+    {name:'PBKDF2', salt, iterations:100000, hash:'SHA-256'},
+    km, {name:'AES-GCM', length:256}, true, ['encrypt']
   );
   const raw = await crypto.subtle.exportKey('raw', key);
   return btoa(String.fromCharCode(...new Uint8Array(raw)));
@@ -560,7 +547,7 @@ async function hashForServer(password, email) {
 async function encryptItem(data, key) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const enc = new TextEncoder();
-  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(data)));
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(JSON.stringify(data)));
   const combined = new Uint8Array(12 + ct.byteLength);
   combined.set(iv); combined.set(new Uint8Array(ct), 12);
   return btoa(String.fromCharCode(...combined));
@@ -568,88 +555,102 @@ async function encryptItem(data, key) {
 
 async function decryptItem(b64, key) {
   const combined = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-  const iv = combined.slice(0, 12), ct = combined.slice(12);
-  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+  const iv = combined.slice(0,12), ct = combined.slice(12);
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ct);
   return JSON.parse(new TextDecoder().decode(pt));
 }
 
-// ═══════════════════════════════════════
-// API CALLS
-// ═══════════════════════════════════════
+// ═══════════════════════════════
+// API
+// ═══════════════════════════════
 async function api(method, path, body, auth) {
-  const headers = { 'Content-Type': 'application/json' };
+  const headers = {'Content-Type':'application/json'};
   if (auth && state.token) headers['Authorization'] = 'Bearer ' + state.token;
-  const r = await fetch(API + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  const r = await fetch(API + path, {method, headers, body: body ? JSON.stringify(body) : undefined});
   const data = await r.json().catch(() => ({}));
   if (!r.ok) {
     const err = new Error(data.error || data.message || 'Erro ' + r.status);
-    err.data = data;
-    err.status = r.status;
+    err.data = data; err.status = r.status;
     throw err;
   }
   return data;
 }
 
-// ═══════════════════════════════════════
-// AUTH FLOWS
-// ═══════════════════════════════════════
-async function doRegister() {
-  const name = document.getElementById('regName').value.trim();
-  const email = document.getElementById('regEmail').value.trim();
-  const pass = document.getElementById('regPass').value;
-  const pass2 = document.getElementById('regPass2').value;
-  if (!name || !email || !pass) return toast('Preenche todos os campos', 'err');
-  if (pass !== pass2) return toast('As senhas não coincidem', 'err');
-  if (pass.length < 8) return toast('Senha mínimo 8 caracteres', 'err');
-  try {
-    const hash = await hashForServer(pass, email);
-    const res = await api('POST', '/auth/register', { username: name, email, passwordHash: hash });
-    if (res.recoveryCodes) {
-      state.pendingEmail = email;
-      state.pendingPass = pass;
-      showRecoveryCodes(res.recoveryCodes);
-    } else {
-      toast('Conta criada! Verifica o email', 'ok');
-      showView('loginView');
-    }
-  } catch(e) { 
-    const msg = e.message.toLowerCase();
-    if (msg.includes('exist') || msg.includes('duplicat') || msg.includes('already') || msg.includes('em uso') || msg.includes('utilizado')) {
-      toast('Este email já está registado. Tenta fazer login.', 'err');
-    } else {
-      toast(e.message, 'err');
-    }
+// ═══════════════════════════════
+// REGISTER — com feedback na confirmação
+// ═══════════════════════════════
+function onRegPassInput() {
+  const v = document.getElementById('regPass').value;
+  updateStrength(v, 'regStrFill', 'regStrLabel');
+  onRegPass2Input();
+}
+
+function onRegPass2Input() {
+  const p1 = document.getElementById('regPass').value;
+  const p2 = document.getElementById('regPass2').value;
+  const msg = document.getElementById('regConfirmMsg');
+  const inp = document.getElementById('regPass2');
+  if (!p2) { msg.innerHTML=''; inp.classList.remove('field-error','field-ok'); return; }
+  if (p1 === p2) {
+    msg.innerHTML = '<span style="color:var(--green)">✓ As senhas coincidem</span>';
+    inp.classList.remove('field-error'); inp.classList.add('field-ok');
+  } else {
+    msg.innerHTML = '<span style="color:var(--red)">✗ As senhas não coincidem</span>';
+    inp.classList.remove('field-ok'); inp.classList.add('field-error');
   }
 }
 
-async function doLogin() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass = document.getElementById('loginPass').value;
-  const errBox = document.getElementById('loginErrBox');
-  errBox.style.display='none';
-  
-  if (!email) { 
-    setFieldState('loginEmail','loginEmailMsg','err','Email obrigatório');
-    return; 
-  }
-  if (!pass) { 
-    setFieldState('loginPass','loginPassMsg','err','Senha obrigatória');
-    return; 
-  }
-  
-  const btn = document.getElementById('loginBtn');
-  btn.textContent='A verificar...';btn.disabled=true;
-  
+async function doRegister() {
+  const name  = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPass').value;
+  const pass2 = document.getElementById('regPass2').value;
+  if (!name || !email || !pass) return toast('Preenche todos os campos','err');
+  if (pass !== pass2) return toast('As senhas não coincidem','err');
+  if (pass.length < 8) return toast('Senha mínimo 8 caracteres','err');
+
+  const btn = document.getElementById('regBtn');
+  btn.textContent = 'A criar conta...'; btn.disabled = true;
   try {
     const hash = await hashForServer(pass, email);
-    await api('POST', '/auth/login', { email, passwordHash: hash });
-    state.pendingEmail = email;
-    state.pendingPass = pass;
-    // Limpar campos após login bem-sucedido
-    document.getElementById('loginEmail').value='';
-    document.getElementById('loginPass').value='';
-    setFieldState('loginEmail','loginEmailMsg','','');
-    setFieldState('loginPass','loginPassMsg','','');
+    const res = await api('POST', '/auth/register', {username:name, email, passwordHash:hash});
+    if (res.recoveryCodes) {
+      state.pendingEmail = email; state.pendingPass = pass;
+      showRecoveryCodes(res.recoveryCodes);
+    } else {
+      toast('Conta criada! Faz login', 'ok');
+      showView('loginView');
+    }
+  } catch(e) {
+    const msg = e.message.toLowerCase();
+    toast(msg.includes('exist')||msg.includes('duplicat')||msg.includes('already')
+      ? 'Este email já está registado. Tenta fazer login.'
+      : e.message, 'err');
+  } finally { btn.textContent='Criar conta'; btn.disabled=false; }
+}
+
+// ═══════════════════════════════
+// LOGIN — com feedback e bloqueio
+// ═══════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  const errBox = document.getElementById('loginErrBox');
+  errBox.style.display = 'none';
+
+  if (!email) { setFieldState('loginEmail','loginEmailMsg','err','Email obrigatório'); return; }
+  if (!pass)  { setFieldState('loginPass','loginPassMsg','err','Senha obrigatória'); return; }
+
+  const btn = document.getElementById('loginBtn');
+  btn.textContent = 'A verificar...'; btn.disabled = true;
+  try {
+    const hash = await hashForServer(pass, email);
+    await api('POST', '/auth/login', {email, passwordHash:hash});
+    state.pendingEmail = email; state.pendingPass = pass;
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPass').value = '';
+    clearFieldState('loginEmail','loginEmailMsg');
+    clearFieldState('loginPass','loginPassMsg');
     document.getElementById('otpEmailDisplay').textContent = email;
     showView('otpView');
     startOTPTimer();
@@ -657,89 +658,83 @@ async function doLogin() {
   } catch(e) {
     const d = e.data || {};
     if (d.blocked) {
-      // Conta bloqueada — mostrar countdown
-      errBox.innerHTML = `🔒 Conta bloqueada por <strong>${d.mins || 15} minuto(s)</strong>.<br><small>Demasiadas tentativas falhadas. Tenta mais tarde.</small>`;
-      errBox.style.display='block';
+      errBox.innerHTML = `🔒 Bloqueado por <strong>${d.mins||15} min</strong>. Demasiadas tentativas.`;
+      errBox.style.display = 'block';
       setFieldState('loginEmail','loginEmailMsg','err','');
       setFieldState('loginPass','loginPassMsg','err','');
-      // Desativar botão durante o bloqueio
-      const btn = document.getElementById('loginBtn');
-      let secs = (d.mins || 15) * 60;
+      let secs = (d.mins||15)*60;
       btn.disabled = true;
-      const bl = setInterval(()=>{
+      const bl = setInterval(() => {
         secs--;
         const m=Math.floor(secs/60), s=secs%60;
-        btn.textContent = `Bloqueado — ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-        if (secs<=0){ clearInterval(bl); btn.disabled=false; btn.textContent='Entrar'; errBox.style.display='none'; clearFieldState('loginEmail','loginEmailMsg'); clearFieldState('loginPass','loginPassMsg'); }
+        btn.textContent = `Bloqueado ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        if (secs<=0) { clearInterval(bl); btn.disabled=false; btn.textContent='Entrar'; errBox.style.display='none'; clearFieldState('loginEmail','loginEmailMsg'); clearFieldState('loginPass','loginPassMsg'); }
       }, 1000);
+      return;
     } else if (typeof d.remaining === 'number') {
-      errBox.textContent = `Email ou senha incorretos. Ainda tens ${d.remaining} tentativa(s) antes do bloqueio.`;
+      errBox.textContent = `Incorreto. Ainda tens ${d.remaining} tentativa(s).`;
       errBox.style.display='block';
       setFieldState('loginPass','loginPassMsg','err','');
     } else {
-      errBox.textContent = e.message || 'Email ou senha incorretos. Verifica os teus dados.';
+      errBox.textContent = e.message || 'Email ou senha incorretos.';
       errBox.style.display='block';
       setFieldState('loginEmail','loginEmailMsg','err','');
       setFieldState('loginPass','loginPassMsg','err','');
     }
   } finally {
-    btn.textContent='Entrar';btn.disabled=false;
+    if (!document.getElementById('loginBtn').textContent.includes('Bloqueado')) {
+      btn.textContent='Entrar'; btn.disabled=false;
+    }
   }
 }
 
 async function doOTP() {
-  const code = Array.from({length:6},(_,i)=>document.getElementById('d'+i).value).join('');
-  if (code.length < 6) return toast('Introduz o código completo', 'err');
+  const code = Array.from({length:6}, (_,i) => document.getElementById('d'+i).value).join('');
+  if (code.length < 6) return toast('Código incompleto','err');
   try {
-    const res = await api('POST', '/auth/verify-otp', { email: state.pendingEmail, otp: code });
-    state.token = res.token;
-    state.user = res.user;
+    const res = await api('POST', '/auth/verify-otp', {email:state.pendingEmail, otp:code});
+    state.token = res.token; state.user = res.user;
     state.cryptoKey = await deriveKey(state.pendingPass, state.pendingEmail);
     state.pendingPass = null;
     await enterVault();
-  } catch(e) { toast(e.message, 'err'); }
+  } catch(e) { toast(e.message,'err'); }
 }
 
 async function resendOTP() {
   try {
-    const hash = await hashForServer(state.pendingPass || '?', state.pendingEmail);
-    await api('POST', '/auth/login', { email: state.pendingEmail, passwordHash: hash });
-    toast('Novo código enviado!', 'ok');
-    startOTPTimer();
-  } catch(e) { toast(e.message, 'err'); }
+    const hash = await hashForServer(state.pendingPass||'?', state.pendingEmail);
+    await api('POST', '/auth/login', {email:state.pendingEmail, passwordHash:hash});
+    toast('Novo código enviado!','ok'); startOTPTimer();
+  } catch(e) { toast(e.message,'err'); }
 }
 
 async function enterVault() {
   document.getElementById('navbar').classList.add('active');
   document.getElementById('navName').textContent = state.user?.username || 'Utilizador';
   document.getElementById('navAvatar').textContent = (state.user?.username||'U')[0].toUpperCase();
-  showVault();
-  await loadItems();
-  startTimer();
+  loadUserTheme(state.user?.email); // carregar tema do utilizador pelo email
+  showVault(); await loadItems(); startTimer();
 }
 
-function proceedToVault() {
-  showView('loginView');
-  toast('Conta criada! Faz login agora', 'ok');
-}
+function proceedToVault() { showView('loginView'); toast('Conta criada! Faz login','ok'); }
 
 function doLogout(auto) {
   stopTimer();
-  state.token = null; state.user = null; state.cryptoKey = null;
-  state.items = []; state.pendingEmail = null; state.pendingPass = null;
+  document.body.classList.remove('vault-light'); // limpar tema ao sair
+  state.token=null; state.user=null; state.cryptoKey=null;
+  state.items=[]; state.pendingEmail=null; state.pendingPass=null;
   document.getElementById('navbar').classList.remove('active');
   document.getElementById('navMenu').classList.remove('open');
   showView('loginView');
   document.getElementById('vaultView').classList.remove('active');
-  if (auto) toast('Sessão encerrada por inatividade', 'err');
-  else toast('Sessão encerrada', 'ok');
+  toast(auto ? 'Sessão encerrada por inatividade' : 'Sessão encerrada', auto?'err':'ok');
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════
 // VAULT
-// ═══════════════════════════════════════
+// ═══════════════════════════════
 function showVault() {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('vaultView').classList.add('active');
 }
 
@@ -747,19 +742,19 @@ async function loadItems() {
   try {
     const res = await api('GET', '/items', null, true);
     state.items = [];
-    for (const item of (res.items || [])) {
+    for (const item of (res.items||[])) {
       try {
         const plain = await decryptItem(item.encrypted_data, state.cryptoKey);
-        state.items.push({ id: item.id, type: item.item_type, ...plain });
-      } catch(e) { /* skip corrupted */ }
+        state.items.push({id:item.id, type:item.item_type, ...plain});
+      } catch(e) { /* skip */ }
     }
     renderItems();
-  } catch(e) { toast('Erro ao carregar itens', 'err'); }
+  } catch(e) { toast('Erro ao carregar itens','err'); }
 }
 
 function renderItems() {
   const grid = document.getElementById('itemsGrid');
-  const q = document.getElementById('searchInput').value.toLowerCase();
+  const q = (document.getElementById('searchInput').value||'').toLowerCase();
   const f = state.filter;
   const filtered = state.items.filter(it => {
     if (f !== 'todos' && it.type !== f) return false;
@@ -770,7 +765,7 @@ function renderItems() {
     grid.innerHTML = `<div class="empty-state"><div class="e-icon">🔒</div><p style="font-size:15px;font-weight:700;color:var(--text2)">Nenhum item encontrado</p><p>Clica em "+ Novo item" para começar</p></div>`;
     return;
   }
-  const icons = { senha:'🔑', nota:'📝', cartao:'💳', identidade:'🪪', crypto:'₿', ssh:'🖥️' };
+  const icons = {senha:'🔑',nota:'📝',cartao:'💳',identidade:'🪪',crypto:'₿',ssh:'🖥️',ficheiro:'📎'};
   grid.innerHTML = filtered.map(it => `
     <div class="item-card" data-type="${it.type}" onclick="viewItem(${it.id})">
       <div class="item-header">
@@ -780,12 +775,11 @@ function renderItems() {
       </div>
       <div class="item-preview">${getPreview(it)}</div>
       <div class="item-actions">
-        <button class="ia" onclick="event.stopPropagation();copyMain(${it.id})">Copiar</button>
-        <button class="ia" onclick="event.stopPropagation();editItem(${it.id})">Editar</button>
-        <button class="ia del" onclick="event.stopPropagation();deleteItem(${it.id})">Eliminar</button>
+        <button class="ia" onclick="event.stopPropagation();copyMain(${it.id})">📋 Copiar</button>
+        <button class="ia" onclick="event.stopPropagation();editItem(${it.id})">✏️ Editar</button>
+        <button class="ia del" onclick="event.stopPropagation();deleteItem(${it.id})">🗑</button>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 function getPreview(it) {
@@ -795,59 +789,69 @@ function getPreview(it) {
   if (it.type==='identidade') return it.fullname ? esc(it.fullname) : '🪪';
   if (it.type==='crypto') return it.wallet ? esc(it.wallet.substring(0,20)+'…') : '₿';
   if (it.type==='ssh') return it.host ? esc(it.host) : '🖥️';
+  if (it.type==='ficheiro') return it.filename ? esc(it.filename) : '📎';
   return '';
 }
 
-function filterItems() { renderItems(); }
 function setFilter(f, el) {
   state.filter = f;
-  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  renderItems();
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); renderItems();
 }
 
 function viewItem(id) {
   const it = state.items.find(i=>i.id===id);
   if (!it) return;
-  const icons = { senha:'🔑', nota:'📝', cartao:'💳', identidade:'🪪', crypto:'₿', ssh:'🖥️' };
-  let html = `<div style="margin-bottom:16px"><div style="font-size:2rem;margin-bottom:8px">${icons[it.type]||'📦'}</div>`;
-  html += `<h2 style="font-size:1.1rem;font-weight:700">${esc(it.title||it.name||'Sem título')}</h2></div>`;
+  const icons = {senha:'🔑',nota:'📝',cartao:'💳',identidade:'🪪',crypto:'₿',ssh:'🖥️',ficheiro:'📎'};
+  let html = `<div style="margin-bottom:16px"><div style="font-size:2rem">${icons[it.type]||'📦'}</div><h2 style="font-size:1.1rem;font-weight:700;margin-top:6px">${esc(it.title||'Sem título')}</h2></div>`;
   const fields = getItemFields(it);
   fields.forEach(f => {
     if (!f.value) return;
-    html += `<div class="field"><label>${f.label}</label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input type="${f.secret?'password':'text'}" value="${esc(f.value)}" readonly style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;outline:none">
-        <button class="ia" onclick="navigator.clipboard.writeText('${esc(f.value)}');toast('Copiado!','ok')" style="flex-shrink:0">Copiar</button>
-        ${f.secret?`<button class="ia" onclick="togglePass(this)" style="flex-shrink:0">Ver</button>`:''}
-      </div></div>`;
+    html += `<div class="field"><label>${f.label}</label><div style="display:flex;gap:8px;align-items:center">
+      <input type="${f.secret?'password':'text'}" value="${esc(f.value)}" readonly style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;outline:none">
+      <button class="ia" onclick="navigator.clipboard.writeText('${esc(f.value)}');toast('Copiado!','ok')">📋</button>
+      ${f.secret?`<button class="ia" onclick="togglePass(this)">👁</button>`:''}
+    </div></div>`;
   });
-  document.getElementById('modalTitle').textContent = it.title || it.name || 'Item';
+  // Ficheiro — botão de download
+  if (it.type==='ficheiro' && it.fileData) {
+    html += `<button class="btn btn-primary" style="margin-top:8px" onclick="downloadFile(${it.id})">⬇️ Descarregar ficheiro</button>`;
+  }
+  document.getElementById('modalTitle').textContent = it.title||'Item';
   document.getElementById('modalBody').innerHTML = html;
   document.getElementById('modalOverlay').classList.add('open');
 }
 
 function getItemFields(it) {
-  if (it.type==='senha') return [{label:'Utilizador',value:it.username},{label:'Senha',value:it.password,secret:true},{label:'URL',value:it.url},{label:'Notas',value:it.notes}];
-  if (it.type==='nota') return [{label:'Conteúdo',value:it.content}];
-  if (it.type==='cartao') return [{label:'Titular',value:it.holder},{label:'Número',value:it.number,secret:true},{label:'Validade',value:it.expiry},{label:'CVV',value:it.cvv,secret:true},{label:'PIN',value:it.pin,secret:true}];
-  if (it.type==='identidade') return [{label:'Nome completo',value:it.fullname},{label:'BI / Passaporte',value:it.docnum},{label:'NIF',value:it.nif},{label:'Data de nascimento',value:it.dob},{label:'Notas',value:it.notes}];
-  if (it.type==='crypto') return [{label:'Carteira / Endereço',value:it.wallet},{label:'Seed phrase',value:it.seed,secret:true},{label:'Chave privada',value:it.privkey,secret:true},{label:'Exchange',value:it.exchange},{label:'Notas',value:it.notes}];
-  if (it.type==='ssh') return [{label:'Host',value:it.host},{label:'Utilizador',value:it.username},{label:'Senha',value:it.password,secret:true},{label:'Chave privada',value:it.privateKey,secret:true},{label:'Porta',value:it.port},{label:'Notas',value:it.notes}];
+  if (it.type==='senha')      return [{label:'Utilizador',value:it.username},{label:'Senha',value:it.password,secret:true},{label:'URL',value:it.url},{label:'Notas',value:it.notes}];
+  if (it.type==='nota')       return [{label:'Conteúdo',value:it.content}];
+  if (it.type==='cartao')     return [{label:'Titular',value:it.holder},{label:'Número',value:it.number,secret:true},{label:'Validade',value:it.expiry},{label:'CVV',value:it.cvv,secret:true},{label:'PIN',value:it.pin,secret:true}];
+  if (it.type==='identidade') return [{label:'Nome completo',value:it.fullname},{label:'BI / Passaporte',value:it.docnum},{label:'NIF',value:it.nif},{label:'Nascimento',value:it.dob},{label:'Notas',value:it.notes}];
+  if (it.type==='crypto')     return [{label:'Endereço',value:it.wallet},{label:'Seed phrase',value:it.seed,secret:true},{label:'Chave privada',value:it.privkey,secret:true},{label:'Exchange',value:it.exchange},{label:'Notas',value:it.notes}];
+  if (it.type==='ssh')        return [{label:'Host',value:it.host},{label:'Utilizador',value:it.username},{label:'Senha',value:it.password,secret:true},{label:'Chave privada',value:it.privateKey,secret:true},{label:'Porta',value:it.port},{label:'Notas',value:it.notes}];
+  if (it.type==='ficheiro')   return [{label:'Nome do ficheiro',value:it.filename},{label:'Tamanho',value:it.filesize},{label:'Notas',value:it.notes}];
   return [];
 }
 
 function togglePass(btn) {
   const inp = btn.previousElementSibling;
   inp.type = inp.type==='password'?'text':'password';
-  btn.textContent = inp.type==='password'?'Ver':'Ocultar';
+  btn.textContent = inp.type==='password'?'👁':'🙈';
 }
 
 function copyMain(id) {
   const it = state.items.find(i=>i.id===id);
   if (!it) return;
-  const val = it.password || it.content || it.number || it.seed || it.privateKey || it.wallet || '';
+  const val = it.password||it.content||it.number||it.seed||it.privateKey||it.wallet||'';
   if (val) { navigator.clipboard.writeText(val); toast('Copiado!','ok'); }
+}
+
+function downloadFile(id) {
+  const it = state.items.find(i=>i.id===id);
+  if (!it||!it.fileData) return;
+  const a = document.createElement('a');
+  a.href = it.fileData; a.download = it.filename||'ficheiro';
+  a.click(); toast('A descarregar...','ok');
 }
 
 async function deleteItem(id) {
@@ -855,23 +859,87 @@ async function deleteItem(id) {
   try {
     await api('DELETE', '/items/'+id, null, true);
     state.items = state.items.filter(i=>i.id!==id);
-    renderItems();
-    toast('Item eliminado','ok');
+    renderItems(); toast('Item eliminado','ok');
   } catch(e) { toast(e.message,'err'); }
 }
 
+// ═══════════════════════════════
+// EXPORTAR / IMPORTAR
+// ═══════════════════════════════
 async function exportVault() {
-  const blob = new Blob([JSON.stringify(state.items,null,2)],{type:'application/json'});
+  document.getElementById('navMenu').classList.remove('open');
+  const blob = new Blob([JSON.stringify({version:'2.1',exportedAt:new Date(),items:state.items},null,2)],{type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'velorumsafe_backup_'+new Date().toISOString().slice(0,10)+'.vault';
-  a.click();
-  toast('Backup exportado','ok');
+  a.click(); toast('Backup exportado','ok');
 }
 
-// ═══════════════════════════════════════
-// NEW/EDIT ITEM MODAL
-// ═══════════════════════════════════════
+function importVault() {
+  document.getElementById('navMenu').classList.remove('open');
+  document.getElementById('modalTitle').textContent = 'Importar backup';
+  document.getElementById('modalBody').innerHTML = `
+    <div class="alert alert-warn">⚠️ Importar vai adicionar os itens ao teu cofre actual. Não apaga os existentes.</div>
+    <div class="file-drop" id="importDrop" onclick="document.getElementById('importFile').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleImportDrop(event)">
+      <div class="fi">📂</div>
+      <p>Clica ou arrasta o ficheiro .vault aqui</p>
+      <small>Ficheiros exportados pelo VelorumSafe</small>
+    </div>
+    <div class="file-info" id="importInfo"></div>
+    <input type="file" id="importFile" accept=".vault,.json" style="display:none" onchange="handleImportFile(this)">
+    <button class="btn btn-primary" id="importBtn" onclick="doImport()" style="margin-top:8px;display:none">📥 Importar itens</button>`;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+let _importData = null;
+
+function handleImportDrop(e) {
+  e.preventDefault();
+  document.getElementById('importDrop').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) readImportFile(file);
+}
+
+function handleImportFile(input) {
+  if (input.files[0]) readImportFile(input.files[0]);
+}
+
+function readImportFile(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const items = data.items || (Array.isArray(data) ? data : null);
+      if (!items) { toast('Ficheiro inválido','err'); return; }
+      _importData = items;
+      const info = document.getElementById('importInfo');
+      info.textContent = `✓ ${file.name} — ${items.length} item(s) encontrado(s)`;
+      info.classList.add('show');
+      document.getElementById('importBtn').style.display = 'block';
+    } catch(e) { toast('Ficheiro corrompido ou inválido','err'); }
+  };
+  reader.readAsText(file);
+}
+
+async function doImport() {
+  if (!_importData) return;
+  let count = 0;
+  for (const item of _importData) {
+    try {
+      const blob = await encryptItem(item, state.cryptoKey);
+      const res = await api('POST', '/items', {encryptedBlob:blob, itemType:item.type||'nota'}, true);
+      state.items.unshift({...item, id:res.id});
+      count++;
+    } catch(e) { /* skip */ }
+  }
+  closeModal(); renderItems();
+  toast(`${count} item(s) importado(s) com sucesso!`, 'ok');
+  _importData = null;
+}
+
+// ═══════════════════════════════
+// NEW / EDIT ITEM
+// ═══════════════════════════════
 function openNewItemModal() {
   state.editingId = null;
   document.getElementById('modalTitle').textContent = 'Novo item';
@@ -896,12 +964,13 @@ function getTypeSelectorHTML() {
     {k:'identidade',icon:'🪪',label:'Identidade'},
     {k:'crypto',icon:'₿',label:'Crypto'},
     {k:'ssh',icon:'🖥️',label:'SSH/API'},
+    {k:'ficheiro',icon:'📎',label:'Ficheiro'},
   ];
   return `<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Que tipo de item queres guardar?</p>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-  ${types.map(t=>`<button onclick="selectItemType('${t.k}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:20px 12px;cursor:pointer;text-align:center;transition:all 0.2s;font-family:'Syne',sans-serif;color:var(--text2)" onmouseover="this.style.borderColor='var(--cyan)';this.style.color='var(--cyan)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
-    <div style="font-size:1.8rem;margin-bottom:8px">${t.icon}</div>
-    <div style="font-size:12px;font-weight:700">${t.label}</div>
+  ${types.map(t=>`<button onclick="selectItemType('${t.k}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px 8px;cursor:pointer;text-align:center;transition:all 0.2s;font-family:'Outfit',sans-serif;color:var(--text2)" onmouseover="this.style.borderColor='var(--cyan)';this.style.color='var(--cyan)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
+    <div style="font-size:1.6rem;margin-bottom:6px">${t.icon}</div>
+    <div style="font-size:11px;font-weight:700">${t.label}</div>
   </button>`).join('')}
   </div>`;
 }
@@ -910,121 +979,132 @@ function selectItemType(type) {
   document.getElementById('modalBody').innerHTML = getItemFormHTML(type, {});
 }
 
+function pwField(id, label, placeholder, value='') {
+  return `<div class="field"><label>${label}</label><div class="pass-wrap"><input type="password" id="f_${id}" placeholder="${placeholder}" value="${esc(value)}" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 44px 12px 16px;color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:all 0.2s"><button type="button" class="eye-btn" onclick="toggleEye('f_${id}',this)" tabindex="-1">👁</button></div></div>`;
+}
+
+function txField(id, label, placeholder, value='') {
+  return `<div class="field"><label>${label}</label><input type="text" id="f_${id}" placeholder="${placeholder}" value="${esc(value)}" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:all 0.2s"></div>`;
+}
+
 function getItemFormHTML(type, data) {
-  const F = (id,label,placeholder,secret,value)=>`<div class="field"><label>${label}</label><input type="${secret?'password':'text'}" id="f_${id}" placeholder="${placeholder}" value="${esc(value||'')}"></div>`;
-  let html = F('title','Título','Nome do item',false,data.title||data.name);
+  let html = txField('title','Título','Nome do item', data.title||data.name||'');
   if (type==='senha') {
-    html += F('username','Utilizador / Email','utilizador@email.com',false,data.username);
-    html += `<div class="field"><label>Senha</label><div style="position:relative"><input type="password" id="f_password" placeholder="A senha" value="${esc(data.password||'')}" oninput="updateStrength(this.value,'fStr','fStrL')"><button onclick="genPass()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:11px;cursor:pointer;font-family:'Syne',sans-serif">⟳ Gerar</button></div><div class="strength-bar"><div class="strength-fill" id="fStr"></div></div><div class="strength-label" id="fStrL"></div></div>`;
-    html += F('url','URL (opcional)','https://site.com',false,data.url);
-    html += F('notes','Notas (opcional)','Informações adicionais',false,data.notes);
+    html += txField('username','Utilizador / Email','utilizador@email.com', data.username||'');
+    html += `<div class="field"><label>Senha</label><div class="pass-wrap"><input type="password" id="f_password" placeholder="A senha" value="${esc(data.password||'')}" oninput="updateStrength(this.value,'fStr','fStrL')" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 80px 12px 16px;color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:all 0.2s"><button type="button" class="eye-btn" onclick="toggleEye('f_password',this)" tabindex="-1" style="right:40px">👁</button><button type="button" onclick="genPass()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cyan);font-size:12px;cursor:pointer;font-family:'JetBrains Mono',monospace" tabindex="-1">⟳</button></div><div class="strength-bar"><div class="strength-fill" id="fStr"></div></div><div class="strength-label" id="fStrL"></div></div>`;
+    html += txField('url','URL (opcional)','https://site.com', data.url||'');
+    html += txField('notes','Notas (opcional)','Informações adicionais', data.notes||'');
   } else if (type==='nota') {
-    html += `<div class="field"><label>Conteúdo</label><textarea id="f_content" placeholder="Escreve aqui..." style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:14px;font-family:'Syne',sans-serif;outline:none;resize:vertical;min-height:120px;transition:border 0.2s" onfocus="this.style.borderColor='var(--cyan)'" onblur="this.style.borderColor='var(--border)'">${esc(data.content||'')}</textarea></div>`;
+    html += `<div class="field"><label>Conteúdo</label><textarea id="f_content" placeholder="Escreve aqui..." style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;outline:none;resize:vertical;min-height:120px;transition:border 0.2s" onfocus="this.style.borderColor='var(--cyan)'" onblur="this.style.borderColor='var(--border)'">${esc(data.content||'')}</textarea></div>`;
   } else if (type==='cartao') {
-    html += F('holder','Titular do cartão','Nome no cartão',false,data.holder);
-    html += F('number','Número do cartão','•••• •••• •••• ••••',true,data.number);
-    html += `<div class="field-row">${F('expiry','Validade','MM/AA',false,data.expiry)}${F('cvv','CVV','•••',true,data.cvv)}</div>`;
-    html += F('pin','PIN (opcional)','••••',true,data.pin);
+    html += txField('holder','Titular','Nome no cartão', data.holder||'');
+    html += pwField('number','Número do cartão','•••• •••• •••• ••••', data.number||'');
+    html += `<div class="field-row">${txField('expiry','Validade','MM/AA',data.expiry||'')}${pwField('cvv','CVV','•••',data.cvv||'')}</div>`;
+    html += pwField('pin','PIN (opcional)','••••', data.pin||'');
   } else if (type==='identidade') {
-    html += F('fullname','Nome completo','Nome e apelido',false,data.fullname);
-    html += F('docnum','BI / Passaporte','Número do documento',false,data.docnum);
-    html += `<div class="field-row">${F('nif','NIF','Número fiscal',false,data.nif)}${F('dob','Data de nascimento','DD/MM/AAAA',false,data.dob)}</div>`;
-    html += F('notes','Notas','Informações adicionais',false,data.notes);
+    html += txField('fullname','Nome completo','Nome e apelido', data.fullname||'');
+    html += txField('docnum','BI / Passaporte','Número do documento', data.docnum||'');
+    html += `<div class="field-row">${txField('nif','NIF','Número fiscal',data.nif||'')}${txField('dob','Nascimento','DD/MM/AAAA',data.dob||'')}</div>`;
+    html += txField('notes','Notas','Informações adicionais', data.notes||'');
   } else if (type==='crypto') {
-    html += F('wallet','Endereço / Carteira','0x...',false,data.wallet);
-    html += F('seed','Seed phrase','12 ou 24 palavras',true,data.seed);
-    html += F('privkey','Chave privada','Chave privada',true,data.privkey);
-    html += F('exchange','Exchange (opcional)','Binance, Coinbase...',false,data.exchange);
-    html += F('notes','Notas','Informações adicionais',false,data.notes);
+    html += txField('wallet','Endereço / Carteira','0x...', data.wallet||'');
+    html += pwField('seed','Seed phrase','12 ou 24 palavras', data.seed||'');
+    html += pwField('privkey','Chave privada','Chave privada', data.privkey||'');
+    html += txField('exchange','Exchange (opcional)','Binance, Coinbase...', data.exchange||'');
+    html += txField('notes','Notas','Informações adicionais', data.notes||'');
   } else if (type==='ssh') {
-    html += F('host','Host / IP','192.168.1.1 ou servidor.com',false,data.host);
-    html += `<div class="field-row">${F('username','Utilizador','root',false,data.username)}${F('port','Porta','22',false,data.port)}</div>`;
-    html += F('password','Senha (opcional)','••••••••',true,data.password);
+    html += txField('host','Host / IP','192.168.1.1 ou servidor.com', data.host||'');
+    html += `<div class="field-row">${txField('username','Utilizador','root',data.username||'')}${txField('port','Porta','22',data.port||'22')}</div>`;
+    html += pwField('password','Senha (opcional)','••••••••', data.password||'');
     html += `<div class="field"><label>Chave privada (opcional)</label><textarea id="f_privateKey" placeholder="-----BEGIN RSA PRIVATE KEY-----" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:12px;font-family:'JetBrains Mono',monospace;outline:none;resize:vertical;min-height:80px;transition:border 0.2s" onfocus="this.style.borderColor='var(--cyan)'" onblur="this.style.borderColor='var(--border)'">${esc(data.privateKey||'')}</textarea></div>`;
-    html += F('notes','Notas','Informações adicionais',false,data.notes);
+    html += txField('notes','Notas','Informações adicionais', data.notes||'');
+  } else if (type==='ficheiro') {
+    html += `<div class="file-drop" onclick="document.getElementById('f_fileInput').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleFileDrop(event)">
+      <div class="fi">📎</div>
+      <p>Clica ou arrasta um ficheiro aqui</p>
+      <small>Qualquer tipo de ficheiro (máx. 4MB)</small>
+    </div>
+    <div class="file-info" id="filePreview">${data.filename?`✓ ${esc(data.filename)}`+' — '+esc(data.filesize||''):''}</div>
+    <input type="file" id="f_fileInput" style="display:none" onchange="handleFileSelect(this)">`;
+    html += txField('notes','Notas (opcional)','Descrição do ficheiro', data.notes||'');
   }
-  html += `<button class="btn btn-primary" style="margin-top:8px" onclick="saveItem('${type}')">💾 Guardar item</button>`;
+  html += `<button class="btn btn-primary" style="margin-top:8px" onclick="saveItem('${type}')">💾 Guardar</button>`;
   html += `<button class="btn btn-ghost" onclick="state.editingId?closeModal():openNewItemModal()">← Voltar</button>`;
   return html;
 }
 
-function gv(id){ const el=document.getElementById('f_'+id); return el?el.value.trim():''; }
+function handleFileDrop(e) {
+  e.preventDefault(); e.currentTarget.classList.remove('drag');
+  if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
+}
+function handleFileSelect(input) { if (input.files[0]) processFile(input.files[0]); }
+
+let _fileData = null, _fileName = '', _fileSize = '';
+function processFile(file) {
+  if (file.size > 4*1024*1024) { toast('Ficheiro demasiado grande (máx. 4MB)','err'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    _fileData = e.target.result;
+    _fileName = file.name;
+    _fileSize = formatBytes(file.size);
+    const info = document.getElementById('filePreview');
+    info.textContent = `✓ ${file.name} — ${_fileSize}`;
+    info.classList.add('show');
+    toast('Ficheiro carregado!','ok');
+  };
+  reader.readAsDataURL(file);
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b+'B';
+  if (b < 1048576) return (b/1024).toFixed(1)+'KB';
+  return (b/1048576).toFixed(1)+'MB';
+}
+
+function gv(id) { const el=document.getElementById('f_'+id); return el?el.value.trim():''; }
 
 async function saveItem(type) {
   const title = gv('title');
-  if (!title) { 
-    const tf=document.getElementById('f_title');
-    if(tf){tf.classList.add('field-error');tf.focus();}
-    return toast('O título é obrigatório','err'); 
-  }
-  let data = { title, type };
-  if (type==='senha') { 
-    data.username=gv('username');
-    data.password=gv('password');
-    data.url=gv('url');
-    data.notes=gv('notes'); 
-  } else if (type==='nota') { 
-    const ta=document.getElementById('f_content');
-    data.content=ta?ta.value.trim():'';
-    if (!data.content) return toast('Escreve algo na nota','err');
-  } else if (type==='cartao') { 
-    if (!gv('number')) return toast('Número do cartão é obrigatório','err');
-    data.holder=gv('holder');data.number=gv('number');data.expiry=gv('expiry');data.cvv=gv('cvv');data.pin=gv('pin'); 
-  } else if (type==='identidade') { 
-    data.fullname=gv('fullname');data.docnum=gv('docnum');data.nif=gv('nif');data.dob=gv('dob');data.notes=gv('notes'); 
-  } else if (type==='crypto') { 
-    data.wallet=gv('wallet');data.seed=gv('seed');data.privkey=gv('privkey');data.exchange=gv('exchange');data.notes=gv('notes'); 
-  } else if (type==='ssh') { 
-    if (!gv('host')) return toast('Host é obrigatório','err');
-    data.host=gv('host');data.username=gv('username');data.port=gv('port')||'22';
-    data.password=gv('password');
-    const ta=document.getElementById('f_privateKey');
-    data.privateKey=ta?ta.value.trim():'';
-    data.notes=gv('notes'); 
-  }
+  if (!title) { const tf=document.getElementById('f_title');if(tf){tf.style.borderColor='var(--red)';tf.focus();}return toast('Título é obrigatório','err'); }
+  let data = {title, type};
+  if (type==='senha')      { data.username=gv('username');data.password=gv('password');data.url=gv('url');data.notes=gv('notes'); }
+  else if (type==='nota')  { const ta=document.getElementById('f_content');data.content=ta?ta.value.trim():'';if(!data.content)return toast('Escreve algo na nota','err'); }
+  else if (type==='cartao'){ if(!gv('number'))return toast('Número do cartão obrigatório','err');data.holder=gv('holder');data.number=gv('number');data.expiry=gv('expiry');data.cvv=gv('cvv');data.pin=gv('pin'); }
+  else if (type==='identidade'){ data.fullname=gv('fullname');data.docnum=gv('docnum');data.nif=gv('nif');data.dob=gv('dob');data.notes=gv('notes'); }
+  else if (type==='crypto'){ data.wallet=gv('wallet');data.seed=gv('seed');data.privkey=gv('privkey');data.exchange=gv('exchange');data.notes=gv('notes'); }
+  else if (type==='ssh')   { if(!gv('host'))return toast('Host obrigatório','err');data.host=gv('host');data.username=gv('username');data.port=gv('port')||'22';data.password=gv('password');const ta=document.getElementById('f_privateKey');data.privateKey=ta?ta.value.trim():'';data.notes=gv('notes'); }
+  else if (type==='ficheiro'){ if(!_fileData&&!gv('notes'))return toast('Selecciona um ficheiro','err');data.fileData=_fileData;data.filename=_fileName;data.filesize=_fileSize;data.notes=gv('notes');_fileData=null; }
   try {
     const blob = await encryptItem(data, state.cryptoKey);
     if (state.editingId) {
-      await api('PUT', '/items/'+state.editingId, { encryptedBlob: blob, itemType: type }, true);
+      await api('PUT', '/items/'+state.editingId, {encryptedBlob:blob, itemType:type}, true);
       const idx = state.items.findIndex(i=>i.id===state.editingId);
-      if (idx>-1) state.items[idx] = { ...data, id: state.editingId };
+      if (idx>-1) state.items[idx] = {...data, id:state.editingId};
     } else {
-      const res = await api('POST', '/items', { encryptedBlob: blob, itemType: type }, true);
-      state.items.unshift({ ...data, id: res.id });
+      const res = await api('POST', '/items', {encryptedBlob:blob, itemType:type}, true);
+      state.items.unshift({...data, id:res.id});
     }
-    closeModal();
-    renderItems();
-    toast('Item guardado com sucesso!','ok');
+    closeModal(); renderItems(); toast('Guardado!','ok');
   } catch(e) { toast(e.message,'err'); }
 }
 
-// ═══════════════════════════════════════
-// PASSWORD STRENGTH
-// ═══════════════════════════════════════
+// ═══════════════════════════════
+// PASSWORD STRENGTH + GENERATOR
+// ═══════════════════════════════
 function calcStrength(p) {
   let s=0;
-  if (p.length>=8) s++;
-  if (p.length>=12) s++;
-  if (/[A-Z]/.test(p)) s++;
-  if (/[0-9]/.test(p)) s++;
-  if (/[^A-Za-z0-9]/.test(p)) s++;
+  if(p.length>=8)s++;if(p.length>=12)s++;
+  if(/[A-Z]/.test(p))s++;if(/[0-9]/.test(p))s++;if(/[^A-Za-z0-9]/.test(p))s++;
   return s;
 }
-const strengthColors=['#ff4466','#ff7700','#ffcc00','#88dd00','#00ff88'];
-const strengthLabels=['Muito fraca','Fraca','Razoável','Boa','Forte'];
+const sColors=['#ff4466','#ff7700','#ffcc00','#88dd00','#00ff88'];
+const sLabels=['Muito fraca','Fraca','Razoável','Boa','Forte'];
 
-function updateStrength(v,fillId,labelId) {
-  if (!v) return;
-  const s=calcStrength(v);
-  const fill=document.getElementById(fillId);
-  const lbl=document.getElementById(labelId);
-  if (fill) { fill.style.width=(s/5*100)+'%';fill.style.background=strengthColors[s-1]||strengthColors[0]; }
-  if (lbl) { lbl.textContent=strengthLabels[s-1]||'';lbl.style.color=strengthColors[s-1]||'var(--text3)'; }
-}
-
-function updateRegStrength() {
-  const v=document.getElementById('regPass').value;
-  updateStrength(v,'regStrengthFill','regStrengthLabel');
+function updateStrength(v, fillId, labelId) {
+  const s = calcStrength(v||'');
+  const fill=document.getElementById(fillId), lbl=document.getElementById(labelId);
+  if (fill) { fill.style.width=v?(s/5*100)+'%':'0'; fill.style.background=sColors[s-1]||sColors[0]; }
+  if (lbl)  { lbl.textContent=v?(sLabels[s-1]||''):''; lbl.style.color=sColors[s-1]||'var(--text3)'; }
 }
 
 function genPass() {
@@ -1034,27 +1114,22 @@ function genPass() {
   if (inp) { inp.value=p; inp.type='text'; updateStrength(p,'fStr','fStrL'); }
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════
 // CHANGE PASSWORD
-// ═══════════════════════════════════════
+// ═══════════════════════════════
 function showChangePassword() {
   document.getElementById('navMenu').classList.remove('open');
   document.getElementById('modalTitle').textContent = 'Mudar senha mestre';
   document.getElementById('modalBody').innerHTML = `
-    <div class="field"><label>Senha atual</label><input type="password" id="cp_old" placeholder="Senha atual"></div>
-    <div class="field"><label>Nova senha</label><input type="password" id="cp_new" placeholder="Nova senha (mín. 8 car.)" oninput="updateStrength(this.value,'cpStr','cpStrL')">
-      <div class="strength-bar"><div class="strength-fill" id="cpStr"></div></div>
-      <div class="strength-label" id="cpStrL"></div>
-    </div>
-    <div class="field"><label>Confirmar nova senha</label><input type="password" id="cp_new2" placeholder="Confirma a nova senha"></div>
+    ${pwField('old','Senha atual','Senha atual','')}
+    <div class="field"><label>Nova senha</label><div class="pass-wrap"><input type="password" id="f_new" placeholder="Nova senha (mín. 8)" oninput="updateStrength(this.value,'cpStr','cpStrL')" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 44px 12px 16px;color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:all 0.2s"><button type="button" class="eye-btn" onclick="toggleEye('f_new',this)" tabindex="-1">👁</button></div><div class="strength-bar"><div class="strength-fill" id="cpStr"></div></div><div class="strength-label" id="cpStrL"></div></div>
+    ${pwField('new2','Confirmar nova senha','Repete a nova senha','')}
     <button class="btn btn-primary" onclick="doChangePass()">Alterar senha</button>`;
   document.getElementById('modalOverlay').classList.add('open');
 }
 
 async function doChangePass() {
-  const old=document.getElementById('cp_old').value;
-  const nw=document.getElementById('cp_new').value;
-  const nw2=document.getElementById('cp_new2').value;
+  const old=gv('old'), nw=document.getElementById('f_new').value, nw2=gv('new2');
   if (nw!==nw2) return toast('As senhas não coincidem','err');
   if (nw.length<8) return toast('Mínimo 8 caracteres','err');
   try {
@@ -1067,56 +1142,55 @@ async function doChangePass() {
       reencrypted.push({id:it.id,blob,type:it.type});
     }
     await api('PUT','/user/password',{oldHash,newHash,reencryptedItems:reencrypted},true);
-    state.cryptoKey=newKey;
-    closeModal();
-    toast('Senha alterada com sucesso!','ok');
+    state.cryptoKey=newKey; closeModal(); toast('Senha alterada!','ok');
   } catch(e) { toast(e.message,'err'); }
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════
 // OTP TIMER
-// ═══════════════════════════════════════
-let _otpInterval;
+// ═══════════════════════════════
+let _otpInt;
 function startOTPTimer() {
-  let secs=600;
-  clearInterval(_otpInterval);
-  _otpInterval=setInterval(()=>{
-    secs--;
-    const el=document.getElementById('otpSecs');
-    if (el) el.textContent=secs;
-    if (secs<=0) clearInterval(_otpInterval);
-  },1000);
+  let secs=600; clearInterval(_otpInt);
+  _otpInt=setInterval(()=>{ secs--; const el=document.getElementById('otpSecs'); if(el)el.textContent=secs; if(secs<=0)clearInterval(_otpInt); },1000);
 }
-
-// OTP input helpers
 function otpInput(i) {
   const v=document.getElementById('d'+i).value.replace(/\D/g,'');
   document.getElementById('d'+i).value=v;
-  if (v && i<5) document.getElementById('d'+(i+1)).focus();
-  if (i===5 && v) doOTP();
+  if(v&&i<5)document.getElementById('d'+(i+1)).focus();
+  if(i===5&&v)doOTP();
 }
 function otpKey(i,e) {
-  if (e.key==='Backspace'&&!document.getElementById('d'+i).value&&i>0) document.getElementById('d'+(i-1)).focus();
-  if (e.key==='ArrowLeft'&&i>0) document.getElementById('d'+(i-1)).focus();
-  if (e.key==='ArrowRight'&&i<5) document.getElementById('d'+(i+1)).focus();
+  if(e.key==='Backspace'&&!document.getElementById('d'+i).value&&i>0)document.getElementById('d'+(i-1)).focus();
+  if(e.key==='ArrowLeft'&&i>0)document.getElementById('d'+(i-1)).focus();
+  if(e.key==='ArrowRight'&&i<5)document.getElementById('d'+(i+1)).focus();
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════
 // RECOVERY CODES
-// ═══════════════════════════════════════
+// ═══════════════════════════════
 function showRecoveryCodes(codes) {
   document.getElementById('recoveryCodes').innerHTML = codes.map(c=>`<div class="recovery-code">${c}</div>`).join('');
   showView('recoveryView');
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════
+// EYE TOGGLE
+// ═══════════════════════════════
+function toggleEye(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  inp.type = inp.type==='password'?'text':'password';
+  btn.textContent = inp.type==='password'?'👁':'🙈';
+}
+
+// ═══════════════════════════════
 // UI HELPERS
-// ═══════════════════════════════════════
+// ═══════════════════════════════
 function showView(id) {
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.getElementById('vaultView').classList.remove('active');
-  // Limpar campos ao trocar de vista
   if (id==='loginView') {
     ['loginEmail','loginPass'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
     ['loginEmailMsg','loginPassMsg'].forEach(f=>{const el=document.getElementById(f);if(el){el.textContent='';el.className='field-msg';}});
@@ -1124,58 +1198,43 @@ function showView(id) {
   }
   if (id==='registerView') {
     ['regName','regEmail','regPass','regPass2'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
-    const sf=document.getElementById('regStrengthFill');if(sf)sf.style.width='0';
-    const sl=document.getElementById('regStrengthLabel');if(sl)sl.textContent='';
+    const sf=document.getElementById('regStrFill');if(sf)sf.style.width='0';
+    const sl=document.getElementById('regStrLabel');if(sl)sl.textContent='';
+    const cm=document.getElementById('regConfirmMsg');if(cm)cm.innerHTML='';
   }
 }
 
 function closeModal() {
   document.getElementById('modalOverlay').classList.remove('open');
-  state.editingId=null;
+  state.editingId=null; _fileData=null;
 }
 
-function toggleNavMenu() {
-  document.getElementById('navMenu').classList.toggle('open');
-}
-document.addEventListener('click', e=>{
-  if (!e.target.closest('.nav-user')) document.getElementById('navMenu').classList.remove('open');
-});
+function toggleNavMenu() { document.getElementById('navMenu').classList.toggle('open'); }
+document.addEventListener('click', e=>{ if(!e.target.closest('.nav-user'))document.getElementById('navMenu').classList.remove('open'); });
 
-let _toastTimeout;
+let _toastT;
 function toast(msg, type) {
   const t=document.getElementById('toast');
-  const icon=document.getElementById('toastIcon');
-  const txt=document.getElementById('toastMsg');
-  icon.textContent=type==='ok'?'✓':'✕';
-  txt.textContent=msg;
+  document.getElementById('toastIcon').textContent=type==='ok'?'✓':'✕';
+  document.getElementById('toastMsg').textContent=msg;
   t.className='show '+(type==='ok'?'ok':'err');
-  clearTimeout(_toastTimeout);
-  _toastTimeout=setTimeout(()=>t.className='',3000);
+  clearTimeout(_toastT); _toastT=setTimeout(()=>t.className='',3500);
 }
-
-function esc(s='') { return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function setFieldState(inputId, msgId, type, msg) {
-  const inp = document.getElementById(inputId);
-  const msgEl = document.getElementById(msgId);
-  if (inp) { inp.classList.remove('field-error','field-ok'); if(type==='err') inp.classList.add('field-error'); if(type==='ok') inp.classList.add('field-ok'); }
-  if (msgEl) { msgEl.textContent=msg; msgEl.className='field-msg'+(type?' '+type:''); }
+  const inp=document.getElementById(inputId), msgEl=document.getElementById(msgId);
+  if(inp){inp.classList.remove('field-error','field-ok');if(type==='err')inp.classList.add('field-error');if(type==='ok')inp.classList.add('field-ok');}
+  if(msgEl){msgEl.textContent=msg;msgEl.className='field-msg'+(type?' '+type:'');}
 }
 function clearFieldState(inputId, msgId) {
-  const inp=document.getElementById(inputId);
-  if(inp){inp.classList.remove('field-error','field-ok');}
-  const m=document.getElementById(msgId);
-  if(m){m.textContent='';m.className='field-msg';}
-  const errBox=document.getElementById('loginErrBox');
-  if(errBox)errBox.style.display='none';
+  const inp=document.getElementById(inputId);if(inp)inp.classList.remove('field-error','field-ok');
+  const m=document.getElementById(msgId);if(m){m.textContent='';m.className='field-msg';}
+  const eb=document.getElementById('loginErrBox');if(eb)eb.style.display='none';
 }
 
-// ═══════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  initTimer();
-});
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+document.addEventListener('DOMContentLoaded', initTimer);
 </script>
 </body>
 </html>
