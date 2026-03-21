@@ -19,6 +19,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type','Authorization'],
   credentials: true
 }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 // ── Pool MySQL ──────────────────────────────────────────
 const pool = mysql.createPool({
   host:     process.env.DB_HOST     || 'localhost',
@@ -305,11 +307,14 @@ app.get('/api/items', authMiddleware, async (req, res) => {
 
 app.post('/api/items', authMiddleware, async (req, res) => {
   try {
-    const { encryptedBlob, itemType } = req.body;
-    if (!encryptedBlob || !itemType) return res.status(400).json({ error: 'Dados em falta' });
+    const blob = req.body.encryptedData || req.body.encryptedBlob;
+    const itemType = req.body.itemType;
+    const title = req.body.title || itemType;
+    const preview = req.body.preview || null;
+    if (!blob || !itemType) return res.status(400).json({ error: 'Dados em falta' });
     const [result] = await pool.execute(
-      'INSERT INTO vault_items (user_id, encrypted_data, item_type) VALUES (?,?,?)',
-      [req.userId, encryptedBlob, itemType]
+      'INSERT INTO vault_items (user_id, encrypted_data, item_type, title, preview) VALUES (?,?,?,?,?)',
+      [req.userId, blob, itemType, title, preview]
     );
     res.json({ ok: true, id: result.insertId });
   } catch(e) { res.status(500).json({ error: 'Erro ao guardar item' }); }
@@ -317,10 +322,11 @@ app.post('/api/items', authMiddleware, async (req, res) => {
 
 app.put('/api/items/:id', authMiddleware, async (req, res) => {
   try {
-    const { encryptedBlob, itemType } = req.body;
+    const blob = req.body.encryptedData || req.body.encryptedBlob;
+    const itemType = req.body.itemType;
     await pool.execute(
       'UPDATE vault_items SET encrypted_data=?, item_type=? WHERE id=? AND user_id=?',
-      [encryptedBlob, itemType, req.params.id, req.userId]
+      [blob, itemType, req.params.id, req.userId]
     );
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: 'Erro ao actualizar item' }); }
