@@ -348,15 +348,8 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
     </div>
     <div class="field">
       <label>Pergunta de segurança</label>
-      <select id="regQuestion" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:all .2s">
-        <option value="">Escolhe uma pergunta...</option>
-        <option>Qual é o nome do teu primeiro animal de estimação?</option>
-        <option>Qual é o nome da cidade onde nasceste?</option>
-        <option>Qual é o nome da tua escola primária?</option>
-        <option>Qual é o apelido da tua mãe antes de casar?</option>
-        <option>Qual é o teu prato favorito?</option>
-        <option>Qual é o nome do teu melhor amigo de infância?</option>
-      </select>
+      <input type="text" id="regQuestion" placeholder="Ex: Qual é o nome do meu primeiro cão?" autocomplete="off" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:all .2s">
+      <div style="font-size:11px;color:var(--text3);margin-top:5px;font-family:'JetBrains Mono',monospace">Cria uma pergunta que só tu sabes responder</div>
     </div>
     <div class="field">
       <label>Resposta secreta</label>
@@ -637,7 +630,7 @@ async function doRegister() {
   if (pass.length < 8) return toast('Senha mínimo 8 caracteres','err');
   const question = document.getElementById('regQuestion').value;
   const answer = document.getElementById('regAnswer').value.trim().toLowerCase();
-  if (!question) return toast('Escolhe uma pergunta de segurança','err');
+  if (!question || question.length < 5) return toast('A pergunta de segurança é obrigatória (mín. 5 caracteres)','err');
   if (!answer) return toast('A resposta de segurança é obrigatória','err');
   const btn = document.getElementById('regBtn');
   btn.textContent = 'A criar conta...'; btn.disabled = true;
