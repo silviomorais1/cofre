@@ -217,7 +217,7 @@ app.post('/api/auth/login', async (req, res) => {
     // Login correto — limpar tentativas falhadas
     await clearFailedAttempts(email);
 
-    // Gerar OTP
+    // Gerar OTP — browser envia o email via EmailJS (Railway bloqueia SMTP)
     const otp = String(Math.floor(100000 + Math.random() * 900000));
     const otpExpiry = new Date(Date.now() + 10 * 60000);
 
@@ -226,15 +226,13 @@ app.post('/api/auth/login', async (req, res) => {
       [otp, otpExpiry, rows[0].id]
     );
 
-    // Enviar email
-    await sendOTPEmail(email, rows[0].username, otp);
-
     await pool.execute(
       'INSERT INTO login_attempts (email, ip_address, success) VALUES (?,?,0)',
       [email, req.ip]
     );
 
-    res.json({ ok: true, message: 'Código enviado para o email' });
+    // Devolve o OTP ao browser para ele enviar via EmailJS
+    res.json({ ok: true, otp, username: rows[0].username, message: 'OTP gerado' });
   } catch(e) {
     console.error('Login error:', e);
     res.status(500).json({ error: 'Erro interno no servidor' });
@@ -244,13 +242,15 @@ app.post('/api/auth/login', async (req, res) => {
 // Verificar OTP
 app.post('/api/auth/verify-otp', async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const { email, otp, browserVerified } = req.body;
     if (!email || !otp) return res.status(400).json({ error: 'Dados em falta' });
 
     const [rows] = await pool.execute('SELECT * FROM users WHERE email=?', [email]);
     if (!rows.length) return res.status(401).json({ error: 'Utilizador não encontrado' });
 
     const user = rows[0];
+
+    // Verificar OTP — tanto gerado pelo servidor como pelo browser
     if (!user.otp_code || user.otp_code !== String(otp).trim()) {
       return res.status(401).json({ error: 'Código inválido' });
     }
@@ -265,7 +265,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: '2h' }
+      { expiresIn: '8h' }
     );
 
     res.json({ ok: true, token, user: { id: user.id, username: user.username, email: user.email } });

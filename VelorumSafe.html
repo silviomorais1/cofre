@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VelorumSafe — Cofre Digital</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔒</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -432,6 +433,33 @@ body.vault-light .item-icon.senha{background:rgba(0,168,204,0.1)} body.vault-lig
 // CONFIG
 // ═══════════════════════════════
 const API = 'https://velorumsafe-production.up.railway.app/api';
+
+// ═══════════════════════════════
+// EMAILJS — OTP enviado pelo browser (Railway bloqueia SMTP)
+// ═══════════════════════════════
+const EJS = {
+  publicKey:  'WYm08R50WezNpVwvK',   // ex: 'abc123XYZ'
+  serviceId:  'service_lfj23uu',   // ex: 'service_xxxxxx'
+  templateId: 'template_fejcvuj'  // ex: 'template_xxxxxx'
+};
+let _otpCode = null;
+let _otpExpiry = 0;
+function generateOTP() {
+  _otpCode = String(Math.floor(100000 + Math.random() * 900000));
+  _otpExpiry = Date.now() + 10 * 60 * 1000; // 10 min
+  return _otpCode;
+}
+async function sendOTPEmail(toEmail, toName) {
+  emailjs.init(EJS.publicKey);
+  const code = generateOTP();
+  await emailjs.send(EJS.serviceId, EJS.templateId, {
+    to_email: toEmail,
+    to_name:  toName || toEmail.split('@')[0],
+    otp_code: code,
+    app_name: 'VelorumSafe'
+  });
+  return code;
+}
 const SESSION_SECONDS = 30;
 
 let state = {
@@ -645,8 +673,15 @@ async function doLogin() {
   btn.textContent = 'A verificar...'; btn.disabled = true;
   try {
     const hash = await hashForServer(pass, email);
-    await api('POST', '/auth/login', {email, passwordHash:hash});
+    // Passo 1: validar credenciais — servidor devolve o OTP
+    const loginRes = await api('POST', '/auth/login', {email, passwordHash:hash});
     state.pendingEmail = email; state.pendingPass = pass;
+    state.pendingName = loginRes.username || email.split('@')[0];
+    // Guardar OTP devolvido pelo servidor
+    if (loginRes.otp) {
+      _otpCode = loginRes.otp;
+      _otpExpiry = Date.now() + 10 * 60 * 1000;
+    }
     document.getElementById('loginEmail').value = '';
     document.getElementById('loginPass').value = '';
     clearFieldState('loginEmail','loginEmailMsg');
@@ -654,6 +689,20 @@ async function doLogin() {
     document.getElementById('otpEmailDisplay').textContent = email;
     showView('otpView');
     startOTPTimer();
+    // Passo 2: enviar o OTP por email via EmailJS
+    try {
+      emailjs.init(EJS.publicKey);
+      await emailjs.send(EJS.serviceId, EJS.templateId, {
+        to_email: email,
+        to_name:  state.pendingName,
+        otp_code: loginRes.otp || _otpCode,
+        app_name: 'VelorumSafe'
+      });
+      toast('Código enviado para ' + email, 'ok');
+    } catch(emailErr) {
+      console.error('EmailJS error:', emailErr);
+      toast('Erro ao enviar email. Verifica a ligação.', 'err');
+    }
     document.getElementById('d0').focus();
   } catch(e) {
     const d = e.data || {};
@@ -692,7 +741,9 @@ async function doOTP() {
   const code = Array.from({length:6}, (_,i) => document.getElementById('d'+i).value).join('');
   if (code.length < 6) return toast('Código incompleto','err');
   try {
+    // Enviar código ao servidor para verificação final e obter JWT
     const res = await api('POST', '/auth/verify-otp', {email:state.pendingEmail, otp:code});
+    _otpCode = null;
     state.token = res.token; state.user = res.user;
     state.cryptoKey = await deriveKey(state.pendingPass, state.pendingEmail);
     state.pendingPass = null;
@@ -702,10 +753,9 @@ async function doOTP() {
 
 async function resendOTP() {
   try {
-    const hash = await hashForServer(state.pendingPass||'?', state.pendingEmail);
-    await api('POST', '/auth/login', {email:state.pendingEmail, passwordHash:hash});
+    await sendOTPEmail(state.pendingEmail, state.pendingName);
     toast('Novo código enviado!','ok'); startOTPTimer();
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { toast('Erro ao reenviar: ' + e.message,'err'); }
 }
 
 async function enterVault() {
