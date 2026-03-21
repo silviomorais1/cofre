@@ -15,7 +15,6 @@ const express     = require('express');
 const mysql       = require('mysql2/promise');
 const bcrypt      = require('bcryptjs');
 const jwt         = require('jsonwebtoken');
-const nodemailer  = require('nodemailer');
 const rateLimit   = require('express-rate-limit');
 const helmet      = require('helmet');
 const cors        = require('cors');
@@ -51,39 +50,41 @@ const pool = mysql.createPool({
 // ─────────────────────────────────────────
 //  EMAIL (Nodemailer)
 // ─────────────────────────────────────────
-const transporter = nodemailer.createTransport({
-  host: process.env.MAIL_HOST || 'smtp-relay.brevo.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
-  },
-});
-
+// Brevo HTTP API — não usa SMTP, usa HTTPS porta 443
 async function sendOTPEmail(toEmail, username, otp) {
-  const mailOptions = {
-    from: process.env.MAIL_FROM || `VelorumSafe <${process.env.MAIL_USER}>`,
-    to:   toEmail,
-    subject: `${otp} — Código de verificação VelorumSafe`,
-    html: `
-      <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#0d1520;color:#e8f4ff;padding:32px;border-radius:16px;border:1px solid rgba(0,210,255,0.2);">
-        <h2 style="color:#00d2ff;margin-bottom:8px;">🔐 VelorumSafe</h2>
-        <p style="color:#7a9bb8;margin-bottom:24px;">Cofre Digital Seguro</p>
-        <p>Olá <strong>${username}</strong>,</p>
-        <p style="margin:16px 0;">O teu código de verificação é:</p>
-        <div style="background:#080d14;border:1px solid rgba(0,210,255,0.3);border-radius:12px;padding:24px;text-align:center;margin:20px 0;">
-          <span style="font-size:36px;font-weight:bold;letter-spacing:12px;color:#00d2ff;font-family:monospace;">${otp}</span>
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'api-key': process.env.BREVO_API_KEY,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      sender: { name: 'VelorumSafe', email: process.env.MAIL_FROM_EMAIL || 'velorumsafe@gmail.com' },
+      to: [{ email: toEmail, name: username }],
+      subject: `${otp} — Código de verificação VelorumSafe`,
+      htmlContent: `
+        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#0d1520;color:#e8f4ff;padding:32px;border-radius:16px;border:1px solid rgba(0,210,255,0.2);">
+          <h2 style="color:#00d2ff;margin-bottom:8px;">🔐 VelorumSafe</h2>
+          <p style="color:#7a9bb8;margin-bottom:24px;">Cofre Digital Seguro</p>
+          <p>Olá <strong>${username}</strong>,</p>
+          <p style="margin:16px 0;">O teu código de verificação é:</p>
+          <div style="background:#080d14;border:1px solid rgba(0,210,255,0.3);border-radius:12px;padding:24px;text-align:center;margin:20px 0;">
+            <span style="font-size:36px;font-weight:bold;letter-spacing:12px;color:#00d2ff;font-family:monospace;">${otp}</span>
+          </div>
+          <p style="color:#7a9bb8;font-size:13px;">Válido por <strong style="color:#e8f4ff;">10 minutos</strong>.</p>
+          <p style="color:#7a9bb8;font-size:13px;">Se não foste tu, ignora este email.</p>
         </div>
-        <p style="color:#7a9bb8;font-size:13px;">Válido por <strong style="color:#e8f4ff;">10 minutos</strong>.</p>
-        <p style="color:#7a9bb8;font-size:13px;">Se não foste tu, ignora este email.</p>
-        <hr style="border-color:rgba(0,210,255,0.1);margin:24px 0;">
-        <p style="color:#4a6a85;font-size:11px;">VelorumSafe — Os teus dados estão encriptados com AES-256-GCM</p>
-      </div>
-    `,
-  };
-  await transporter.sendMail(mailOptions);
+      `
+    })
+  });
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error('Brevo API error: ' + err);
+  }
 }
+
+
 
 // ─────────────────────────────────────────
 //  RATE LIMITING
