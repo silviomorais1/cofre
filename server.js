@@ -157,9 +157,10 @@ app.post('/api/auth/register', registerLimiter,
       // Guardar códigos de recuperação (já vêm com hash SHA-256 do cliente)
       const codesJSON = JSON.stringify(recoveryCodes || []);
 
+      const { securityQuestion, securityAnswerHash } = req.body;
       await pool.execute(
-        'INSERT INTO users (email, username, password_hash, recovery_codes) VALUES (?, ?, ?, ?)',
-        [email, username, serverHash, codesJSON]
+        'INSERT INTO users (email, username, password_hash, recovery_codes, security_question, security_answer_hash) VALUES (?, ?, ?, ?, ?, ?)',
+        [email, username, serverHash, codesJSON, securityQuestion||null, securityAnswerHash||null]
       );
 
       // Log
@@ -396,6 +397,63 @@ app.get('/api/user/export', authMiddleware, async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao exportar' });
+  }
+});
+
+
+// ─────────────────────────────────────────
+//  ROTAS — RECUPERAÇÃO DE CONTA
+// ─────────────────────────────────────────
+
+// POST /api/auth/recovery/question — obter pergunta de segurança
+app.post('/api/auth/recovery/question', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email obrigatório' });
+  try {
+    const [rows] = await pool.execute(
+      'SELECT security_question FROM users WHERE email = ?', [email]
+    );
+    if (!rows.length || !rows[0].security_question) {
+      return res.status(404).json({ error: 'Conta não encontrada ou sem pergunta de segurança' });
+    }
+    res.json({ question: rows[0].security_question });
+  } catch(err) {
+    res.status(500).json({ error: 'Erro interno' });
+  }
+});
+
+// POST /api/auth/recovery/reset — verificar resposta e redefinir senha
+app.post('/api/auth/recovery/reset', async (req, res) => {
+  const { email, answerHash, newPasswordHash } = req.body;
+  if (!email || !answerHash || !newPasswordHash) {
+    return res.status(400).json({ error: 'Dados em falta' });
+  }
+  try {
+    const [rows] = await pool.execute(
+      'SELECT id, security_answer_hash FROM users WHERE email = ?', [email]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Conta não encontrada' });
+    const user = rows[0];
+    // Comparar hash da resposta
+    const valid = await bcrypt.compare(answerHash, user.security_answer_hash || '');
+    if (!valid) {
+      // Fallback: comparar directamente (respostas antigas não têm bcrypt)
+      if (answerHash !== user.security_answer_hash) {
+        return res.status(401).json({ error: 'Resposta incorreta' });
+      }
+    }
+    // Redefinir senha
+    const newServerHash = await bcrypt.hash(newPasswordHash, 12);
+    await pool.execute(
+      'UPDATE users SET password_hash = ? WHERE id = ?',
+      [newServerHash, user.id]
+    );
+    // Apagar OTPs pendentes
+    await pool.execute('DELETE FROM otp_codes WHERE user_id = ?', [user.id]);
+    res.json({ ok: true });
+  } catch(err) {
+    console.error('Recovery error:', err);
+    res.status(500).json({ error: 'Erro interno' });
   }
 });
 
