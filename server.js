@@ -33,18 +33,20 @@ app.use(cors({
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization']
 }));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
 
 // ─────────────────────────────────────────
 //  POOL MySQL
 // ─────────────────────────────────────────
 const pool = mysql.createPool({
-  host:     process.env.DB_HOST || 'localhost',
-  user:     process.env.DB_USER || 'vault_user',
-  password: process.env.DB_PASS || '',
-  database: process.env.DB_NAME || 'vault_db',
+  host:             process.env.DB_HOST || 'localhost',
+  port:   parseInt(process.env.DB_PORT  || '3306'),
+  user:             process.env.DB_USER || 'vault_user',
+  password:         process.env.DB_PASS || '',
+  database:         process.env.DB_NAME || 'vault_db',
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit:  10,
+  connectTimeout:   30000,
 });
 
 // ─────────────────────────────────────────
@@ -345,6 +347,23 @@ app.post('/api/items', authMiddleware,
     }
   }
 );
+
+// PUT /api/items/:id — editar item
+app.put('/api/items/:id', authMiddleware, async (req, res) => {
+  const { encryptedData, item_type } = req.body;
+  if (!encryptedData || !item_type) return res.status(400).json({ error: 'Dados em falta' });
+  try {
+    const [result] = await pool.execute(
+      'UPDATE vault_items SET encrypted_data = ?, item_type = ? WHERE id = ? AND user_id = ?',
+      [encryptedData, item_type, req.params.id, req.userId]
+    );
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Item não encontrado' });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Edit item error:', err);
+    res.status(500).json({ error: 'Erro ao editar item' });
+  }
+});
 
 // DELETE /api/items/:id — eliminar item
 app.delete('/api/items/:id', authMiddleware, async (req, res) => {
