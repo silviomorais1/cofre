@@ -318,7 +318,7 @@ app.post('/api/auth/resend-otp', otpLimiter, async (req, res) => {
 app.get('/api/items', authMiddleware, async (req, res) => {
   try {
     const [rows] = await pool.execute(
-      'SELECT id, encrypted_data, item_type, created_at FROM vault_items WHERE user_id = ? ORDER BY created_at DESC',
+      'SELECT id, encrypted_content, item_type, created_at FROM vault_items WHERE user_id = ? ORDER BY created_at DESC',
       [req.userId]
     );
     res.json({ items: rows });
@@ -337,7 +337,7 @@ app.post('/api/items', authMiddleware,
     }
     try {
       const [result] = await pool.execute(
-        'INSERT INTO vault_items (user_id, encrypted_data, item_type) VALUES (?, ?, ?)',
+        'INSERT INTO vault_items (user_id, encrypted_content, item_type) VALUES (?, ?, ?)',
         [req.userId, encryptedData, item_type]
       );
       res.json({ ok: true, id: result.insertId });
@@ -354,7 +354,7 @@ app.put('/api/items/:id', authMiddleware, async (req, res) => {
   if (!encryptedData || !item_type) return res.status(400).json({ error: 'Dados em falta' });
   try {
     const [result] = await pool.execute(
-      'UPDATE vault_items SET encrypted_data = ?, item_type = ? WHERE id = ? AND user_id = ?',
+      'UPDATE vault_items SET encrypted_content = ?, item_type = ? WHERE id = ? AND user_id = ?',
       [encryptedData, item_type, req.params.id, req.userId]
     );
     if (result.affectedRows === 0) return res.status(404).json({ error: 'Item não encontrado' });
@@ -402,7 +402,7 @@ app.get('/api/user/me', authMiddleware, async (req, res) => {
 app.get('/api/user/export', authMiddleware, async (req, res) => {
   try {
     const [items] = await pool.execute(
-      'SELECT id, encrypted_data, item_type, created_at FROM vault_items WHERE user_id = ?',
+      'SELECT id, encrypted_content as encrypted_data, item_type, created_at FROM vault_items WHERE user_id = ?',
       [req.userId]
     );
     const [user]  = await pool.execute(
