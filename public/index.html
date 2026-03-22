@@ -490,8 +490,10 @@ function toggleTheme() {
   const isLight = document.documentElement.classList.contains('vs-light');
   const newTheme = isLight ? 'dark' : 'light';
   applyTheme(newTheme, state.user?.email);
-  const btn = document.getElementById('themeBtn');
-  if (btn) btn.textContent = newTheme === 'light' ? '🌙' : '☀️';
+  const navBtn = document.getElementById('themeBtn');
+  if (navBtn) navBtn.textContent = newTheme === 'light' ? '🌙' : '☀️';
+  const menuBtn = document.getElementById('themeToggleBtn');
+  if (menuBtn) menuBtn.textContent = newTheme === 'light' ? '🌙 Modo escuro' : '☀️ Modo claro';
   toast(newTheme === 'light' ? '☀️ Modo claro activado' : '🌙 Modo escuro activado', 'info');
 }
 
@@ -1204,7 +1206,10 @@ async function saveItem(type) {
       addLog('add', `Guardou "${title}" (${type})`);
     }
     closeModal(); renderItems(); toast('Guardado!','ok');
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) {
+    console.error('saveItem error:', e);
+    toast(e.message || 'Erro ao guardar. Verifica a ligação.','err');
+  }
 }
 
 // ═══════════════════════════════════════
@@ -1328,7 +1333,7 @@ function showView(id) {
   }
   if(id==='recoverView'){showRecoverStep(1);const el=document.getElementById('recEmail');if(el)el.value='';}
   if(id==='registerView'){
-    ['regName','regEmail','regPass','regPass2'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
+    ['regName','regEmail','regPass','regPass2','regQuestion','regAnswer'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
     const sf=document.getElementById('regStrFill');if(sf)sf.style.width='0';
     const sl=document.getElementById('regStrLabel');if(sl)sl.textContent='';
     const cm=document.getElementById('regConfirmMsg');if(cm)cm.innerHTML='';
