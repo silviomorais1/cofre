@@ -179,7 +179,123 @@ app.post('/api/auth/register', registerLimiter,
   }
 );
 
-// POST /api/auth/login  — gera e envia OTP
+// POST /api/auth/login-username — login directo com username + senha (sem OTP)
+app.post('/api/auth/login-username', async (req, res) => {
+  const { username, passwordHash } = req.body;
+  if (!username || !passwordHash) {
+    return res.status(400).json({ error: 'Nome de utilizador e senha obrigatórios' });
+  }
+  try {
+    // Verificar bloqueio progressivo
+    const [lockRows] = await pool.execute(
+      'SELECT attempts, locked_until FROM email_lockouts WHERE email = ?', [username]
+    );
+    if (lockRows.length) {
+      const lock = lockRows[0];
+      if (lock.locked_until && new Date(lock.locked_until) > new Date()) {
+        const mins = Math.ceil((new Date(lock.locked_until) - new Date()) / 60000);
+        return res.status(429).json({ error: 'Conta bloqueada', blocked: true, mins });
+      }
+    }
+
+    const [rows] = await pool.execute(
+      'SELECT id, username, email, password_hash FROM users WHERE username = ?', [username]
+    );
+    if (!rows.length) {
+      await incrementLockout(username);
+      const remaining = await getRemainingAttempts(username);
+      return res.status(401).json({ error: 'Nome ou senha incorretos', remaining });
+    }
+
+    const user = rows[0];
+    // O cliente envia a senha em plaintext — servidor faz o mesmo PBKDF2 que faria no registo
+    const clientHash = await derivePasswordHash(passwordHash, user.email);
+    const valid = await bcrypt.compare(clientHash, user.password_hash);
+    if (!valid) {
+      await incrementLockout(username);
+      const remaining = await getRemainingAttempts(username);
+      if (remaining === 0) {
+        const mins = await getLockoutMins(username);
+        return res.status(429).json({ error: 'Conta bloqueada', blocked: true, mins });
+      }
+      return res.status(401).json({ error: 'Nome ou senha incorretos', remaining });
+    }
+
+    // Login bem sucedido — limpar bloqueio
+    await pool.execute('DELETE FROM email_lockouts WHERE email = ?', [username]);
+    await pool.execute('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id]);
+
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET || 'dev_secret_muda_isto',
+      { expiresIn: '60m' }
+    );
+
+    res.json({ ok: true, token, user: { id: user.id, username: user.username, email: user.email } });
+  } catch (err) {
+    console.error('Login-username error:', err);
+    res.status(500).json({ error: 'Erro interno no servidor' });
+  }
+});
+
+// Helpers para bloqueio progressivo
+const crypto = require('crypto');
+
+function derivePasswordHash(password, email) {
+  return new Promise((resolve, reject) => {
+    // Mesmo algoritmo que o cliente usa: PBKDF2 SHA-256, 100000 iterações, salt = email + 'velorumsafe-auth-salt-v1'
+    const salt = Buffer.from(email + 'velorumsafe-auth-salt-v1', 'utf8');
+    crypto.pbkdf2(password, salt, 100000, 32, 'sha256', (err, key) => {
+      if (err) reject(err);
+      else resolve(key.toString('hex'));
+    });
+  });
+}
+
+async function incrementLockout(username) {
+  try {
+    const [rows] = await pool.execute('SELECT attempts FROM email_lockouts WHERE email = ?', [username]);
+    if (!rows.length) {
+      await pool.execute('INSERT INTO email_lockouts (email, attempts, last_attempt) VALUES (?, 1, NOW())', [username]);
+    } else {
+      const attempts = rows[0].attempts + 1;
+      let lockedUntil = null;
+      // Bloqueio progressivo: 5 erros→2min, +3→5min, +1→15min
+      if (attempts >= 9) lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+      else if (attempts >= 6) lockedUntil = new Date(Date.now() + 5 * 60 * 1000);
+      else if (attempts >= 5) lockedUntil = new Date(Date.now() + 2 * 60 * 1000);
+      await pool.execute(
+        'UPDATE email_lockouts SET attempts = ?, locked_until = ?, last_attempt = NOW() WHERE email = ?',
+        [attempts, lockedUntil, username]
+      );
+    }
+  } catch(e) { console.error('Lockout error:', e); }
+}
+
+async function getRemainingAttempts(username) {
+  try {
+    const [rows] = await pool.execute('SELECT attempts FROM email_lockouts WHERE email = ?', [username]);
+    if (!rows.length) return 4;
+    const a = rows[0].attempts;
+    if (a < 5) return 5 - a;
+    if (a < 6) return 0; // bloqueado 2min
+    if (a < 9) return 9 - a;
+    return 0;
+  } catch(e) { return 0; }
+}
+
+async function getLockoutMins(username) {
+  try {
+    const [rows] = await pool.execute('SELECT attempts FROM email_lockouts WHERE email = ?', [username]);
+    if (!rows.length) return 2;
+    const a = rows[0].attempts;
+    if (a >= 9) return 15;
+    if (a >= 6) return 5;
+    return 2;
+  } catch(e) { return 2; }
+}
+
+
 app.post('/api/auth/login', loginLimiter,
   async (req, res) => {
     const { email, passwordHash } = req.body;

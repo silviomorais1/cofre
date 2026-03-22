@@ -272,9 +272,9 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
       <div class="sub">Faça o seu login aqui</div>
     </div>
     <div class="field">
-      <label>Email</label>
-      <input type="text" id="loginEmail" placeholder="o_teu@email.com" autocomplete="username" oninput="clearFieldState('loginEmail','loginEmailMsg')">
-      <div class="field-msg" id="loginEmailMsg"></div>
+      <label>Nome de utilizador</label>
+      <input type="text" id="loginUsername" placeholder="o_teu_nome" autocomplete="username" oninput="clearFieldState('loginUsername','loginUsernameMsg')">
+      <div class="field-msg" id="loginUsernameMsg"></div>
     </div>
     <div class="field">
       <label>Senha mestre</label>
@@ -370,9 +370,9 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
     <div class="auth-logo">
       <div class="lock-icon">📧</div>
       <div class="big"><span class="v">Velorum</span><span class="s">Safe</span></div>
-      <div class="sub">Verificação em 2 passos</div>
+      <div class="sub" id="otpViewSub">Verificação em 2 passos</div>
     </div>
-    <p style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:4px">Código enviado para</p>
+    <p style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:4px" id="otpViewDesc">Código enviado para</p>
     <p style="font-size:14px;font-weight:700;text-align:center;color:var(--cyan);margin-bottom:20px;font-family:'JetBrains Mono',monospace" id="otpEmailDisplay"></p>
     <div class="otp-box-wrap">
       <input class="otp-single" type="text" id="otpSingle" maxlength="6" inputmode="numeric" placeholder="Cole ou escreve o código" oninput="onOTPInput()" onkeydown="if(event.key==='Enter')doOTP()">
@@ -380,7 +380,7 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
     </div>
     <button class="btn btn-primary" onclick="doOTP()">Verificar código</button>
     <button class="btn btn-ghost" onclick="resendOTP()">Reenviar código</button>
-    <div class="auth-link"><a onclick="showView('loginView')">← Voltar</a></div>
+    <div class="auth-link"><a id="otpBackLink" onclick="showView('loginView')">← Voltar</a></div>
   </div>
 </div>
 
@@ -657,63 +657,73 @@ async function doRegister() {
   btn.textContent = 'A criar conta...'; btn.disabled = true;
   try {
     const hash = await hashForServer(pass, email);
-    // Hash da resposta para guardar no servidor de forma segura
     const answerHash = await hashForServer(answer, email + ':recovery');
     await api('POST', '/auth/register', {username:name, email, passwordHash:hash, securityQuestion:question, securityAnswerHash:answerHash});
-    toast('Conta criada! Faz login', 'ok');
-    showView('loginView');
+    // Após criar conta, enviar OTP para verificar email
+    state.pendingEmail = email;
+    state.pendingPass = pass;
+    state.pendingName = name;
+    state.otpContext = 'register'; // contexto: registo
+    // Pedir OTP ao servidor
+    await api('POST', '/auth/resend-otp', {email});
+    // Enviar via EmailJS
+    try {
+      emailjs.init(EJS.publicKey);
+      const otpRes = await api('POST', '/auth/login', {email, passwordHash: hash});
+      await emailjs.send(EJS.serviceId, EJS.templateId, {
+        to_email: email, to_name: name,
+        otp_code: otpRes.otp || '------', app_name: 'VelorumSafe'
+      });
+    } catch(e) { console.error('EmailJS:', e); }
+    // Mostrar ecrã OTP
+    document.getElementById('otpEmailDisplay').textContent = email;
+    document.getElementById('otpViewSub').textContent = 'Verificar email';
+    document.getElementById('otpViewDesc').textContent = 'Código de confirmação enviado para';
+    document.getElementById('otpBackLink').onclick = () => showView('registerView');
+    const otpEl = document.getElementById('otpSingle');
+    if (otpEl) otpEl.value = '';
+    showView('otpView');
+    startOTPTimer();
+    toast('Código enviado para ' + email, 'ok');
   } catch(e) {
     const msg = e.message.toLowerCase();
     toast(msg.includes('exist')||msg.includes('duplicat')||msg.includes('already')
-      ? 'Este email já está registado.'
+      ? 'Este email ou nome já está registado.'
       : e.message, 'err');
   } finally { btn.textContent='Criar conta'; btn.disabled=false; }
 }
 
 // ═══════════════════════════════════════
-// LOGIN
+// LOGIN — usa username + senha (sem OTP)
 // ═══════════════════════════════════════
 async function doLogin() {
-  const email = document.getElementById('loginEmail').value.trim();
+  const username = document.getElementById('loginUsername').value.trim();
   const pass = document.getElementById('loginPass').value;
   const errBox = document.getElementById('loginErrBox');
   errBox.style.display = 'none';
-  if (!email) { setFieldState('loginEmail','loginEmailMsg','err','Email obrigatório'); return; }
+  if (!username) { setFieldState('loginUsername','loginUsernameMsg','err','Nome de utilizador obrigatório'); return; }
   if (!pass) { setFieldState('loginPass','loginPassMsg','err','Senha obrigatória'); return; }
   const btn = document.getElementById('loginBtn');
   btn.textContent = 'A verificar...'; btn.disabled = true;
   try {
-    const hash = await hashForServer(pass, email);
-    const loginRes = await api('POST', '/auth/login', {email, passwordHash:hash});
-    state.pendingEmail = email; state.pendingPass = pass;
-    state.pendingName = loginRes.username || email.split('@')[0];
-    document.getElementById('otpEmailDisplay').textContent = email;
-    // Limpar campo OTP
-    const otpEl = document.getElementById('otpSingle');
-    if (otpEl) { otpEl.value = ''; }
-    showView('otpView');
-    startOTPTimer();
-    // Enviar OTP via EmailJS
-    try {
-      emailjs.init(EJS.publicKey);
-      await emailjs.send(EJS.serviceId, EJS.templateId, {
-        to_email: email,
-        to_name: state.pendingName,
-        otp_code: loginRes.otp || '------',
-        app_name: 'VelorumSafe'
-      });
-      toast('Código enviado para ' + email, 'ok');
-    } catch(emailErr) {
-      console.error('EmailJS:', emailErr);
-    }
-    setTimeout(() => { const el = document.getElementById('otpSingle'); if(el) el.focus(); }, 100);
+    const loginRes = await api('POST', '/auth/login-username', {username, passwordHash: pass});
+    // Login directo — sem OTP
+    state.token = loginRes.token;
+    state.user = loginRes.user;
+    state.pendingEmail = loginRes.user.email;
+    state.pendingPass = pass;
+    state.cryptoKey = await deriveKey(pass, loginRes.user.email);
+    state.pendingPass = null;
+    addLog('auth', 'Login bem sucedido');
+    await enterVault();
   } catch(e) {
     const d = e.data || {};
     if (d.blocked) {
-      errBox.innerHTML = `🔒 Bloqueado por <strong>${d.mins||15} min</strong>.`;
+      const mins = d.mins || 15;
+      errBox.innerHTML = `🔒 Conta bloqueada por <strong>${mins} minuto(s)</strong>. Tenta mais tarde.`;
       errBox.style.display = 'block';
       btn.disabled = true;
-      let secs = (d.mins||15)*60;
+      let secs = mins * 60;
       const bl = setInterval(() => {
         secs--; const m=Math.floor(secs/60), s=secs%60;
         btn.textContent = `Bloqueado ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
@@ -721,7 +731,10 @@ async function doLogin() {
       }, 1000);
       return;
     }
-    errBox.textContent = d.remaining ? `Incorreto. ${d.remaining} tentativa(s) restante(s).` : (e.message || 'Email ou senha incorretos.');
+    const remaining = d.remaining;
+    errBox.textContent = remaining
+      ? `Nome ou senha incorretos. ${remaining} tentativa(s) restante(s).`
+      : (e.message || 'Nome de utilizador ou senha incorretos.');
     errBox.style.display = 'block';
     setFieldState('loginPass','loginPassMsg','err','');
   } finally {
@@ -743,20 +756,43 @@ function onOTPInput() {
 async function doOTP() {
   const code = (document.getElementById('otpSingle').value || '').trim().replace(/\D/g,'');
   if (code.length < 6) return toast('Código incompleto — 6 dígitos','err');
+  const ctx = state.otpContext || 'login';
   try {
-    const res = await api('POST', '/auth/verify-otp', {email:state.pendingEmail, otp:code});
-    state.token = res.token; state.user = res.user;
-    state.cryptoKey = await deriveKey(state.pendingPass, state.pendingEmail);
-    state.pendingPass = null;
-    addLog('auth', 'Login bem sucedido');
-    await enterVault();
+    if (ctx === 'register') {
+      // Verificar OTP de registo — depois entrar directamente
+      const res = await api('POST', '/auth/verify-otp', {email:state.pendingEmail, otp:code});
+      state.token = res.token; state.user = res.user;
+      state.cryptoKey = await deriveKey(state.pendingPass, state.pendingEmail);
+      state.pendingPass = null; state.otpContext = null;
+      addLog('auth', 'Conta criada e verificada');
+      toast('Conta verificada! Bem-vindo(a)!', 'ok');
+      await enterVault();
+    } else if (ctx === 'recover') {
+      // Verificar OTP de recuperação
+      const res = await api('POST', '/auth/verify-otp', {email:state.pendingEmail, otp:code});
+      if (res.ok) {
+        state.otpContext = null;
+        // Continuar com reset de senha
+        await doRecoverFinal();
+      }
+    } else if (ctx === 'changepass') {
+      // Verificar OTP para trocar senha
+      const res = await api('POST', '/auth/verify-otp', {email:state.user.email, otp:code});
+      if (res.ok) {
+        state.otpContext = null;
+        closeModal();
+        await applyPasswordChange();
+      }
+    }
   } catch(e) { toast(e.message,'err'); }
 }
 
 async function resendOTP() {
+  const email = state.pendingEmail || (state.user && state.user.email);
+  if (!email) return toast('Email não disponível','err');
   try {
-    await api('POST', '/auth/resend-otp', {email:state.pendingEmail});
-    emailjs.init(EJS.publicKey);
+    await api('POST', '/auth/resend-otp', {email});
+    try { emailjs.init(EJS.publicKey); } catch(e){}
     toast('Novo código enviado!','ok'); startOTPTimer();
   } catch(e) { toast('Erro ao reenviar','err'); }
 }
@@ -1270,26 +1306,58 @@ function showChangePassword() {
   document.getElementById('navMenu').classList.remove('open');
   document.getElementById('modalTitle').textContent = 'Mudar senha mestre';
   document.getElementById('modalBody').innerHTML = `
+    <div class="alert alert-info" style="font-size:13px;margin-bottom:16px">Para confirmar a tua identidade, introduz o teu email e uma nova senha. Receberás um código de verificação.</div>
+    <div class="field"><label>O teu email</label><input type="email" id="f_cpEmail" placeholder="o_teu@email.com" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:14px;outline:none;transition:all .2s"></div>
     ${pwField('old','Senha atual','Senha atual','')}
     <div class="field"><label>Nova senha</label><div class="pass-wrap"><input type="password" id="f_new" placeholder="Nova senha (mín. 8)" oninput="updateStrength(this.value,'cpStr','cpStrL')" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 44px 12px 16px;color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:all .2s"><button type="button" class="eye-btn" onclick="toggleEye('f_new',this)" tabindex="-1">👁</button></div><div class="strength-bar"><div class="strength-fill" id="cpStr"></div></div><div class="strength-label" id="cpStrL"></div></div>
     ${pwField('new2','Confirmar nova senha','Repete a nova senha','')}
-    <button class="btn btn-primary" onclick="doChangePass()">Alterar senha</button>`;
+    <button class="btn btn-primary" onclick="requestChangePassOTP()">Enviar código de verificação</button>`;
   document.getElementById('modalOverlay').classList.add('open');
 }
-async function doChangePass() {
-  const old=gv('old'),nw=document.getElementById('f_new').value,nw2=gv('new2');
-  if(nw!==nw2)return toast('As senhas não coincidem','err');
-  if(nw.length<8)return toast('Mínimo 8 caracteres','err');
+
+async function requestChangePassOTP() {
+  const email = document.getElementById('f_cpEmail').value.trim();
+  const old = gv('old');
+  const nw = document.getElementById('f_new').value;
+  const nw2 = gv('new2');
+  if (!email) return toast('Insere o teu email','err');
+  if (!old) return toast('Insere a senha atual','err');
+  if (nw !== nw2) return toast('As senhas não coincidem','err');
+  if (nw.length < 8) return toast('Mínimo 8 caracteres','err');
+  // Verificar que o email corresponde ao utilizador
+  if (email.toLowerCase() !== (state.user.email||'').toLowerCase()) return toast('Email não corresponde à conta','err');
+  // Guardar dados para usar após OTP
+  state._cpOld = old; state._cpNew = nw;
+  state.otpContext = 'changepass';
   try {
-    const oldHash=await hashForServer(old,state.user.email);
-    const newHash=await hashForServer(nw,state.user.email);
-    const newKey=await deriveKey(nw,state.user.email);
-    const reencrypted=[];
+    await api('POST', '/auth/resend-otp', {email});
+    closeModal();
+    document.getElementById('otpEmailDisplay').textContent = email;
+    document.getElementById('otpViewSub').textContent = 'Confirmar alteração';
+    document.getElementById('otpViewDesc').textContent = 'Código de verificação enviado para';
+    document.getElementById('otpBackLink').onclick = () => { state.otpContext=null; showVault(); };
+    const otpEl = document.getElementById('otpSingle');
+    if (otpEl) otpEl.value = '';
+    showView('otpView');
+    startOTPTimer();
+    toast('Código enviado para ' + email, 'ok');
+  } catch(e) { toast('Erro ao enviar código: ' + e.message,'err'); }
+}
+
+async function applyPasswordChange() {
+  try {
+    const oldHash = await hashForServer(state._cpOld, state.user.email);
+    const newHash = await hashForServer(state._cpNew, state.user.email);
+    const newKey = await deriveKey(state._cpNew, state.user.email);
+    const reencrypted = [];
     for(const it of state.items){const blob=await encryptItem(it,newKey);reencrypted.push({id:it.id,blob,type:it.type});}
     await api('PUT','/user/password',{oldHash,newHash,reencryptedItems:reencrypted},true);
-    state.cryptoKey=newKey; closeModal(); toast('Senha alterada!','ok');
+    state.cryptoKey = newKey;
+    state._cpOld = null; state._cpNew = null;
+    showVault();
+    toast('Senha alterada com sucesso!','ok');
     addLog('auth','Alterou a senha mestre');
-  } catch(e){toast(e.message,'err');}
+  } catch(e) { toast(e.message,'err'); showVault(); }
 }
 
 
@@ -1326,14 +1394,37 @@ async function doRecoverStep2() {
   if (!answer) return toast('Insere a resposta','err');
   if (!newPass || newPass.length < 8) return toast('Senha mínimo 8 caracteres','err');
   if (newPass !== newPass2) return toast('As senhas não coincidem','err');
+  // Guardar dados para usar após OTP
+  state._recoverAnswer = answer;
+  state._recoverNewPass = newPass;
+  state.pendingEmail = _recoverEmail;
+  state.otpContext = 'recover';
+  // Enviar OTP
   try {
-    const answerHash = await hashForServer(answer, _recoverEmail + ':recovery');
-    const newHash = await hashForServer(newPass, _recoverEmail);
+    await api('POST', '/auth/resend-otp', {email: _recoverEmail});
+    document.getElementById('otpEmailDisplay').textContent = _recoverEmail;
+    document.getElementById('otpViewSub').textContent = 'Confirmar recuperação';
+    document.getElementById('otpViewDesc').textContent = 'Código de segurança enviado para';
+    document.getElementById('otpBackLink').onclick = () => showView('recoverView');
+    const otpEl = document.getElementById('otpSingle');
+    if (otpEl) otpEl.value = '';
+    showView('otpView');
+    startOTPTimer();
+    toast('Código enviado para ' + _recoverEmail, 'ok');
+  } catch(e) { toast('Erro ao enviar código: ' + e.message, 'err'); }
+}
+
+async function doRecoverFinal() {
+  try {
+    const answerHash = await hashForServer(state._recoverAnswer, _recoverEmail + ':recovery');
+    const newHash = await hashForServer(state._recoverNewPass, _recoverEmail);
     await api('POST', '/auth/recovery/reset', {email:_recoverEmail, answerHash, newPasswordHash:newHash});
-    toast('Senha redefinida com sucesso! Faz login.','ok');
+    state._recoverAnswer = null; state._recoverNewPass = null;
+    toast('Senha redefinida! Faz login.','ok');
     showView('loginView');
   } catch(e) {
     toast(e.message.includes('incorrect') || e.message.includes('incorreta') ? 'Resposta incorreta' : e.message, 'err');
+    showView('recoverView');
   }
 }
 
@@ -1354,8 +1445,8 @@ function showView(id) {
   document.getElementById(id).classList.add('active');
   document.getElementById('vaultView').classList.remove('active');
   if(id==='loginView'){
-    ['loginEmail','loginPass'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
-    ['loginEmailMsg','loginPassMsg'].forEach(f=>{const el=document.getElementById(f);if(el){el.textContent='';el.className='field-msg';}});
+    ['loginUsername','loginPass'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
+    ['loginUsernameMsg','loginPassMsg'].forEach(f=>{const el=document.getElementById(f);if(el){el.textContent='';el.className='field-msg';}});
     const eb=document.getElementById('loginErrBox');if(eb)eb.style.display='none';
   }
   if(id==='recoverView'){showRecoverStep(1);const el=document.getElementById('recEmail');if(el)el.value='';}
@@ -1386,3 +1477,7 @@ document.addEventListener('DOMContentLoaded', initTimer);
 </script>
 </body>
 </html>
+< ! - -   v 3 . 2   - - > 
+ 
+ < ! - -   v 3 . 3   - - >  
+ 
