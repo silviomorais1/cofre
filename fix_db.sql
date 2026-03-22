@@ -1,6 +1,7 @@
-USE vault_db;
+USE railway;
 
--- Corrigir coluna enc_salt para ter valor padrão vazio
-ALTER TABLE users MODIFY COLUMN enc_salt VARCHAR(64) NOT NULL DEFAULT '';
+ALTER TABLE users ADD COLUMN security_question TEXT DEFAULT NULL;
+ALTER TABLE users ADD COLUMN security_answer_hash VARCHAR(255) DEFAULT NULL;
 
-SELECT 'Corrigido!' AS status;
+SELECT 'Colunas de recuperação adicionadas!' AS status;
+SHOW COLUMNS FROM users;

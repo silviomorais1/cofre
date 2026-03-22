@@ -318,7 +318,7 @@ app.post('/api/auth/resend-otp', otpLimiter, async (req, res) => {
 app.get('/api/items', authMiddleware, async (req, res) => {
   try {
     const [rows] = await pool.execute(
-      'SELECT id, encrypted_content, item_type, created_at FROM vault_items WHERE user_id = ? ORDER BY created_at DESC',
+      'SELECT id, encrypted_content AS encrypted_data, item_type, created_at FROM vault_items WHERE user_id = ? ORDER BY created_at DESC',
       [req.userId]
     );
     res.json({ items: rows });
@@ -331,8 +331,9 @@ app.get('/api/items', authMiddleware, async (req, res) => {
 // POST /api/items — guardar novo item
 app.post('/api/items', authMiddleware,
   async (req, res) => {
-    const { encryptedData, item_type } = req.body;
-    if (!encryptedData || !item_type) {
+    const encryptedData = req.body.encryptedData || req.body.encrypted_content || req.body.encryptedBlob;
+    const item_type = req.body.item_type || req.body.itemType || 'nota';
+    if (!encryptedData) {
       return res.status(400).json({ error: 'Dados do item em falta' });
     }
     try {
@@ -350,8 +351,9 @@ app.post('/api/items', authMiddleware,
 
 // PUT /api/items/:id — editar item
 app.put('/api/items/:id', authMiddleware, async (req, res) => {
-  const { encryptedData, item_type } = req.body;
-  if (!encryptedData || !item_type) return res.status(400).json({ error: 'Dados em falta' });
+  const encryptedData = req.body.encryptedData || req.body.encrypted_content || req.body.encryptedBlob;
+  const item_type = req.body.item_type || req.body.itemType || 'nota';
+  if (!encryptedData) return res.status(400).json({ error: 'Dados em falta' });
   try {
     const [result] = await pool.execute(
       'UPDATE vault_items SET encrypted_content = ?, item_type = ? WHERE id = ? AND user_id = ?',

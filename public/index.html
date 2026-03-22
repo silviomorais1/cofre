@@ -498,7 +498,11 @@ function toggleTheme() {
 }
 
 function clearTheme() {
+  // Só remove a classe visual — não apaga a preferência guardada do utilizador
   document.documentElement.classList.remove('vs-light');
+  // Repor botão para escuro (estado padrão antes do login)
+  const navBtn = document.getElementById('themeBtn');
+  if (navBtn) navBtn.textContent = '☀️';
 }
 
 // ═══════════════════════════════════════
@@ -872,7 +876,7 @@ function renderItems() {
       </div>
       <div class="item-preview">${getPreview(it)}</div>
       <div class="item-actions">
-        <button class="ia" onclick="event.stopPropagation();copyMain(${it.id})">📋 Copiar</button>
+        <button class="ia" onclick="event.stopPropagation();copyMain(${it.id})" title="Copiar">📋 Copiar</button>
         <button class="ia" onclick="event.stopPropagation();editItem(${it.id})">✏️ Editar</button>
         <button class="ia del" onclick="event.stopPropagation();deleteItem(${it.id})">🗑</button>
       </div>
@@ -939,8 +943,22 @@ function togglePass(btn) {
 function copyMain(id) {
   const it = state.items.find(i=>i.id===id);
   if (!it) return;
-  const val = it.password||it.content||it.number||it.seed||it.privateKey||it.wallet||'';
-  if (val) { navigator.clipboard.writeText(val); toast('Copiado!','ok'); }
+  let val = '';
+  if (it.type==='senha')      val = it.password || it.username || '';
+  else if (it.type==='nota')  val = it.content || '';
+  else if (it.type==='cartao') val = it.number || '';
+  else if (it.type==='identidade') val = it.docnum || it.fullname || '';
+  else if (it.type==='crypto') val = it.wallet || it.seed || '';
+  else if (it.type==='ssh')   val = it.password || it.host || '';
+  else val = it.password || it.content || it.number || it.seed || it.privateKey || it.wallet || '';
+  if (val) {
+    navigator.clipboard.writeText(val).then(() => toast('Copiado!','ok')).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = val; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      toast('Copiado!','ok');
+    });
+  } else { toast('Nada para copiar','err'); }
 }
 
 function downloadFile(id) {
@@ -1359,5 +1377,3 @@ document.addEventListener('DOMContentLoaded', initTimer);
 </script>
 </body>
 </html>
-< ! - -   v 3 . 1   - - >  
- 
