@@ -242,8 +242,9 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
   <div class="nav-right">
     <div id="timerBadge">
       <div id="timerDot"></div>
-      <span id="timerCount">00:30</span>
+      <span id="timerCount">01:00</span>
     </div>
+    <button id="themeBtn" onclick="toggleTheme()" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;transition:all .2s;color:var(--text2)" title="Alternar tema">☀️</button>
     <div class="nav-user" onclick="toggleNavMenu()">
       <div class="nav-avatar" id="navAvatar">U</div>
       <span id="navName">Utilizador</span>
@@ -477,9 +478,11 @@ function applyTheme(theme, email) {
 
 function loadUserTheme(email) {
   const saved = localStorage.getItem(themeKey(email)) || 'dark';
-  applyTheme(saved); // não guarda de novo
+  applyTheme(saved);
   const btn = document.getElementById('themeToggleBtn');
   if (btn) btn.textContent = saved === 'light' ? '🌙 Modo escuro' : '☀️ Modo claro';
+  const navBtn = document.getElementById('themeBtn');
+  if (navBtn) navBtn.textContent = saved === 'light' ? '🌙' : '☀️';
 }
 
 function toggleTheme() {
@@ -487,6 +490,10 @@ function toggleTheme() {
   const isLight = document.documentElement.classList.contains('vs-light');
   const newTheme = isLight ? 'dark' : 'light';
   applyTheme(newTheme, state.user?.email);
+  const navBtn = document.getElementById('themeBtn');
+  if (navBtn) navBtn.textContent = newTheme === 'light' ? '🌙' : '☀️';
+  const menuBtn = document.getElementById('themeToggleBtn');
+  if (menuBtn) menuBtn.textContent = newTheme === 'light' ? '🌙 Modo escuro' : '☀️ Modo claro';
   toast(newTheme === 'light' ? '☀️ Modo claro activado' : '🌙 Modo escuro activado', 'info');
 }
 
@@ -571,7 +578,7 @@ async function hashForServer(password, email) {
     km, {name:'AES-GCM', length:256}, true, ['encrypt']
   );
   const raw = await crypto.subtle.exportKey('raw', key);
-  return btoa(String.fromCharCode(...new Uint8Array(raw)));
+  return uint8ToBase64(new Uint8Array(raw));
 }
 
 async function encryptItem(data, key) {
@@ -580,7 +587,17 @@ async function encryptItem(data, key) {
   const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(JSON.stringify(data)));
   const combined = new Uint8Array(12 + ct.byteLength);
   combined.set(iv); combined.set(new Uint8Array(ct), 12);
-  return btoa(String.fromCharCode(...combined));
+  return uint8ToBase64(combined);
+}
+
+// Safe base64 conversion for large arrays (avoids call stack overflow)
+function uint8ToBase64(bytes) {
+  let binary = '';
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
 }
 
 async function decryptItem(b64, key) {
@@ -929,6 +946,21 @@ function copyMain(id) {
 function downloadFile(id) {
   const it = state.items.find(i=>i.id===id);
   if (!it||!it.fileData) return;
+  // Check if it's multiple files
+  try {
+    const parsed = JSON.parse(it.fileData);
+    if (Array.isArray(parsed)) {
+      // Multiple files — download each
+      parsed.forEach((f, i) => {
+        setTimeout(() => {
+          const a = document.createElement('a');
+          a.href = f.data; a.download = f.name.split('/').pop() || 'ficheiro_'+i; a.click();
+        }, i * 300);
+      });
+      toast(`A descarregar ${parsed.length} ficheiro(s)...`, 'ok');
+      return;
+    }
+  } catch(e) { /* single file */ }
   const a = document.createElement('a');
   a.href = it.fileData; a.download = it.filename||'ficheiro'; a.click();
   toast('A descarregar...','ok');
@@ -996,7 +1028,7 @@ async function doImport() {
   for (const item of _importData) {
     try {
       const blob = await encryptItem(item, state.cryptoKey);
-      const res = await api('POST', '/items', {encryptedBlob:blob, itemType:item.type||'nota'}, true);
+      const res = await api('POST', '/items', {encryptedData:blob, item_type:item.type||'nota'}, true);
       state.items.unshift({...item, id:res.id}); count++;
     } catch(e) { /* skip */ }
   }
@@ -1080,10 +1112,12 @@ function getItemFormHTML(type, data) {
     html += txField('notes','Notas','Informações adicionais', data.notes||'');
   } else if (type==='ficheiro') {
     html += `<div class="file-drop" onclick="document.getElementById('f_fileInput').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleFileDrop(event)">
-      <div class="fi">📎</div><p>Clica ou arrasta um ficheiro aqui</p><small>Qualquer tipo de ficheiro (máx. 4MB)</small>
+      <div class="fi">📎</div><p>Clica ou arrasta ficheiros aqui</p><small>Qualquer tipo de ficheiro (máx. 4MB por ficheiro)</small>
     </div>
     <div class="file-info" id="filePreview">${data.filename?`✓ ${esc(data.filename)} — ${esc(data.filesize||'')}`:''}</div>
-    <input type="file" id="f_fileInput" style="display:none" onchange="handleFileSelect(this)">`;
+    <input type="file" id="f_fileInput" style="display:none" multiple onchange="handleFileSelect(this)">
+    <button type="button" onclick="document.getElementById('f_folderInput').click()" style="width:100%;margin-top:8px;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-family:'Outfit',sans-serif;font-size:13px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--cyan)'" onmouseout="this.style.borderColor='var(--border)'">📁 Seleccionar pasta inteira</button>
+    <input type="file" id="f_folderInput" style="display:none" webkitdirectory multiple onchange="handleFolderSelect(this)">`;
     html += txField('notes','Notas (opcional)','Descrição do ficheiro', data.notes||'');
   }
   html += `<button class="btn btn-primary" style="margin-top:8px" onclick="saveItem('${type}')">💾 Guardar</button>`;
@@ -1091,14 +1125,47 @@ function getItemFormHTML(type, data) {
   return html;
 }
 
-function handleFileDrop(e) { e.preventDefault(); e.currentTarget.classList.remove('drag'); if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]); }
-function handleFileSelect(input) { if (input.files[0]) processFile(input.files[0]); }
-let _fileData = null, _fileName = '', _fileSize = '';
+function handleFileDrop(e) {
+  e.preventDefault(); e.currentTarget.classList.remove('drag');
+  const files = Array.from(e.dataTransfer.files);
+  if (files.length > 1) { processMultipleFiles(files); } else if (files[0]) { processFile(files[0]); }
+}
+function handleFileSelect(input) {
+  const files = Array.from(input.files);
+  if (files.length > 1) { processMultipleFiles(files); } else if (files[0]) { processFile(files[0]); }
+}
+function handleFolderSelect(input) {
+  const files = Array.from(input.files);
+  if (files.length) processMultipleFiles(files);
+}
+let _fileData = null, _fileName = '', _fileSize = '', _multiFiles = null;
+
+async function processMultipleFiles(files) {
+  const validFiles = files.filter(f => f.size <= 4*1024*1024);
+  if (validFiles.length < files.length) toast(`${files.length - validFiles.length} ficheiro(s) ignorado(s) — tamanho máx. 4MB`, 'err');
+  if (!validFiles.length) return;
+  // Store all as zip-like structure
+  const filePromises = validFiles.map(f => new Promise(res => {
+    const reader = new FileReader();
+    reader.onload = e => res({ name: f.webkitRelativePath || f.name, data: e.target.result, size: f.size });
+    reader.readAsDataURL(f);
+  }));
+  _multiFiles = await Promise.all(filePromises);
+  const totalSize = formatBytes(validFiles.reduce((a,f) => a+f.size, 0));
+  _fileData = JSON.stringify(_multiFiles);
+  _fileName = validFiles.length === 1 ? validFiles[0].name : `${validFiles.length} ficheiros (pasta)`;
+  _fileSize = totalSize;
+  const info = document.getElementById('filePreview');
+  if (info) { info.textContent = `✓ ${_fileName} — ${totalSize}`; info.classList.add('show'); }
+  toast(`${validFiles.length} ficheiro(s) carregado(s)!`, 'ok');
+}
+
 function processFile(file) {
   if (file.size > 4*1024*1024) { toast('Ficheiro demasiado grande (máx. 4MB)','err'); return; }
   const reader = new FileReader();
   reader.onload = (e) => {
     _fileData = e.target.result; _fileName = file.name; _fileSize = formatBytes(file.size);
+    _multiFiles = null;
     const info = document.getElementById('filePreview');
     if (info) { info.textContent = `✓ ${file.name} — ${_fileSize}`; info.classList.add('show'); }
     toast('Ficheiro carregado!','ok');
@@ -1118,21 +1185,31 @@ async function saveItem(type) {
   else if (type==='identidade'){ data.fullname=gv('fullname');data.docnum=gv('docnum');data.nif=gv('nif');data.dob=gv('dob');data.notes=gv('notes'); }
   else if (type==='crypto'){ data.wallet=gv('wallet');data.seed=gv('seed');data.privkey=gv('privkey');data.exchange=gv('exchange');data.notes=gv('notes'); }
   else if (type==='ssh')   { if(!gv('host'))return toast('Host obrigatório','err');data.host=gv('host');data.username=gv('username');data.port=gv('port')||'22';data.password=gv('password');const ta=document.getElementById('f_privateKey');data.privateKey=ta?ta.value.trim():'';data.notes=gv('notes'); }
-  else if (type==='ficheiro'){ if(!_fileData&&!state.editingId)return toast('Selecciona um ficheiro','err');if(_fileData){data.fileData=_fileData;data.filename=_fileName;data.filesize=_fileSize;}data.notes=gv('notes');_fileData=null; }
+  else if (type==='ficheiro'){
+    // Check both _fileData variable and the preview element (in case of page reload)
+    const hasFile = _fileData !== null && _fileData !== undefined && _fileData !== '';
+    if (!hasFile && !state.editingId) return toast('Selecciona um ficheiro','err');
+    if (hasFile) { data.fileData=_fileData; data.filename=_fileName; data.filesize=_fileSize; }
+    data.notes=gv('notes');
+    _fileData=null; _fileName=''; _fileSize=''; _multiFiles=null;
+  }
   try {
     const blob = await encryptItem(data, state.cryptoKey);
     if (state.editingId) {
-      await api('PUT', '/items/'+state.editingId, {encryptedBlob:blob, itemType:type}, true);
+      await api('PUT', '/items/'+state.editingId, {encryptedData:blob, item_type:type}, true);
       const idx = state.items.findIndex(i=>i.id===state.editingId);
       if (idx>-1) state.items[idx] = {...data, id:state.editingId};
       addLog('', `Editou "${title}"`);
     } else {
-      const res = await api('POST', '/items', {encryptedBlob:blob, itemType:type}, true);
+      const res = await api('POST', '/items', {encryptedData:blob, item_type:type}, true);
       state.items.unshift({...data, id:res.id});
       addLog('add', `Guardou "${title}" (${type})`);
     }
     closeModal(); renderItems(); toast('Guardado!','ok');
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) {
+    console.error('saveItem error:', e);
+    toast(e.message || 'Erro ao guardar. Verifica a ligação.','err');
+  }
 }
 
 // ═══════════════════════════════════════
@@ -1256,13 +1333,13 @@ function showView(id) {
   }
   if(id==='recoverView'){showRecoverStep(1);const el=document.getElementById('recEmail');if(el)el.value='';}
   if(id==='registerView'){
-    ['regName','regEmail','regPass','regPass2'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
+    ['regName','regEmail','regPass','regPass2','regQuestion','regAnswer'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
     const sf=document.getElementById('regStrFill');if(sf)sf.style.width='0';
     const sl=document.getElementById('regStrLabel');if(sl)sl.textContent='';
     const cm=document.getElementById('regConfirmMsg');if(cm)cm.innerHTML='';
   }
 }
-function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); state.editingId=null; _fileData=null; }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); state.editingId=null; _fileData=null; _fileName=''; _fileSize=''; _multiFiles=null; }
 function toggleNavMenu() { document.getElementById('navMenu').classList.toggle('open'); }
 document.addEventListener('click',e=>{if(!e.target.closest('.nav-user'))document.getElementById('navMenu').classList.remove('open');});
 let _toastT;
@@ -1282,3 +1359,5 @@ document.addEventListener('DOMContentLoaded', initTimer);
 </script>
 </body>
 </html>
+< ! - -   v 3 . 1   - - >  
+ 
