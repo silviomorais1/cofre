@@ -179,50 +179,51 @@ app.post('/api/auth/register', registerLimiter,
   }
 );
 
-// POST /api/auth/login-username — login directo com username + senha (sem OTP)
+// POST /api/auth/login-username — login directo sem OTP, com bloqueio progressivo
 app.post('/api/auth/login-username', async (req, res) => {
   const { username, passwordHash } = req.body;
   if (!username || !passwordHash) {
     return res.status(400).json({ error: 'Nome de utilizador e senha obrigatórios' });
   }
+  const lockKey = username.toLowerCase();
   try {
-    // Verificar bloqueio progressivo
+    // Verificar bloqueio
     const [lockRows] = await pool.execute(
-      'SELECT attempts, locked_until FROM email_lockouts WHERE email = ?', [username]
+      'SELECT attempts, locked_until FROM email_lockouts WHERE email = ?', [lockKey]
     );
-    if (lockRows.length) {
-      const lock = lockRows[0];
-      if (lock.locked_until && new Date(lock.locked_until) > new Date()) {
-        const mins = Math.ceil((new Date(lock.locked_until) - new Date()) / 60000);
-        return res.status(429).json({ error: 'Conta bloqueada', blocked: true, mins });
-      }
+    if (lockRows.length && lockRows[0].locked_until && new Date(lockRows[0].locked_until) > new Date()) {
+      const mins = Math.ceil((new Date(lockRows[0].locked_until) - new Date()) / 60000);
+      return res.status(429).json({ error: 'Conta bloqueada', blocked: true, mins });
     }
 
+    // Buscar utilizador pelo username
     const [rows] = await pool.execute(
       'SELECT id, username, email, password_hash FROM users WHERE username = ?', [username]
     );
     if (!rows.length) {
-      await incrementLockout(username);
-      const remaining = await getRemainingAttempts(username);
+      await doIncrementLockout(lockKey);
+      const remaining = await doGetRemaining(lockKey);
       return res.status(401).json({ error: 'Nome ou senha incorretos', remaining });
     }
 
     const user = rows[0];
-    // O cliente envia a senha em plaintext — servidor faz o mesmo PBKDF2 que faria no registo
-    const clientHash = await derivePasswordHash(passwordHash, user.email);
-    const valid = await bcrypt.compare(clientHash, user.password_hash);
+    // Derivar hash da senha usando o mesmo método que o cliente usa no registo
+    // Cliente: hashForServer(pass, email) = PBKDF2(pass, 'server:' + email, 100000, SHA-256)
+    const derivedHash = await serverDeriveHash(passwordHash, user.email);
+    const valid = await bcrypt.compare(derivedHash, user.password_hash);
+
     if (!valid) {
-      await incrementLockout(username);
-      const remaining = await getRemainingAttempts(username);
+      await doIncrementLockout(lockKey);
+      const remaining = await doGetRemaining(lockKey);
       if (remaining === 0) {
-        const mins = await getLockoutMins(username);
+        const mins = await doGetLockMins(lockKey);
         return res.status(429).json({ error: 'Conta bloqueada', blocked: true, mins });
       }
       return res.status(401).json({ error: 'Nome ou senha incorretos', remaining });
     }
 
-    // Login bem sucedido — limpar bloqueio
-    await pool.execute('DELETE FROM email_lockouts WHERE email = ?', [username]);
+    // Sucesso — limpar bloqueio e actualizar last_login
+    await pool.execute('DELETE FROM email_lockouts WHERE email = ?', [lockKey]);
     await pool.execute('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id]);
 
     const token = jwt.sign(
@@ -238,55 +239,48 @@ app.post('/api/auth/login-username', async (req, res) => {
   }
 });
 
-// Helpers para bloqueio progressivo
-const crypto = require('crypto');
-
-function derivePasswordHash(password, email) {
+// Deriva o hash da senha no servidor — igual ao que o cliente faz com hashForServer(pass, email)
+function serverDeriveHash(password, email) {
   return new Promise((resolve, reject) => {
-    // Mesmo algoritmo que o cliente usa: PBKDF2 SHA-256, 100000 iterações, salt = email + 'velorumsafe-auth-salt-v1'
-    const salt = Buffer.from(email + 'velorumsafe-auth-salt-v1', 'utf8');
+    const crypto = require('crypto');
+    const salt = Buffer.from('server:' + email.toLowerCase(), 'utf8');
     crypto.pbkdf2(password, salt, 100000, 32, 'sha256', (err, key) => {
       if (err) reject(err);
-      else resolve(key.toString('hex'));
+      else resolve(key.toString('base64'));
     });
   });
 }
 
-async function incrementLockout(username) {
+// Helpers bloqueio progressivo: 5 erros→2min, +3→5min, +1→15min
+async function doIncrementLockout(key) {
   try {
-    const [rows] = await pool.execute('SELECT attempts FROM email_lockouts WHERE email = ?', [username]);
+    const [rows] = await pool.execute('SELECT attempts FROM email_lockouts WHERE email = ?', [key]);
     if (!rows.length) {
-      await pool.execute('INSERT INTO email_lockouts (email, attempts, last_attempt) VALUES (?, 1, NOW())', [username]);
+      await pool.execute('INSERT INTO email_lockouts (email, attempts, last_attempt) VALUES (?, 1, NOW())', [key]);
     } else {
-      const attempts = rows[0].attempts + 1;
-      let lockedUntil = null;
-      // Bloqueio progressivo: 5 erros→2min, +3→5min, +1→15min
-      if (attempts >= 9) lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
-      else if (attempts >= 6) lockedUntil = new Date(Date.now() + 5 * 60 * 1000);
-      else if (attempts >= 5) lockedUntil = new Date(Date.now() + 2 * 60 * 1000);
-      await pool.execute(
-        'UPDATE email_lockouts SET attempts = ?, locked_until = ?, last_attempt = NOW() WHERE email = ?',
-        [attempts, lockedUntil, username]
-      );
+      const a = rows[0].attempts + 1;
+      let locked = null;
+      if (a >= 9) locked = new Date(Date.now() + 15 * 60 * 1000);
+      else if (a >= 6) locked = new Date(Date.now() + 5 * 60 * 1000);
+      else if (a >= 5) locked = new Date(Date.now() + 2 * 60 * 1000);
+      await pool.execute('UPDATE email_lockouts SET attempts=?, locked_until=?, last_attempt=NOW() WHERE email=?', [a, locked, key]);
     }
-  } catch(e) { console.error('Lockout error:', e); }
+  } catch(e) { console.error('Lockout err:', e); }
 }
-
-async function getRemainingAttempts(username) {
+async function doGetRemaining(key) {
   try {
-    const [rows] = await pool.execute('SELECT attempts FROM email_lockouts WHERE email = ?', [username]);
+    const [rows] = await pool.execute('SELECT attempts FROM email_lockouts WHERE email=?', [key]);
     if (!rows.length) return 4;
     const a = rows[0].attempts;
     if (a < 5) return 5 - a;
-    if (a < 6) return 0; // bloqueado 2min
+    if (a < 6) return 0;
     if (a < 9) return 9 - a;
     return 0;
   } catch(e) { return 0; }
 }
-
-async function getLockoutMins(username) {
+async function doGetLockMins(key) {
   try {
-    const [rows] = await pool.execute('SELECT attempts FROM email_lockouts WHERE email = ?', [username]);
+    const [rows] = await pool.execute('SELECT attempts FROM email_lockouts WHERE email=?', [key]);
     if (!rows.length) return 2;
     const a = rows[0].attempts;
     if (a >= 9) return 15;
