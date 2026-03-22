@@ -256,7 +256,6 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
         <div class="nav-menu-item" onclick="showChangePassword()">🔑 Mudar senha</div>
         <div class="nav-menu-item" onclick="exportVault()">📤 Exportar cofre</div>
         <div class="nav-menu-item" onclick="importVault()">📥 Importar backup</div>
-        <div class="nav-menu-item" id="themeToggleBtn" onclick="toggleTheme()">☀️ Modo claro</div>
         <div class="nav-menu-sep"></div>
         <div class="nav-menu-item danger" onclick="doLogout()">🚪 Sair</div>
       </div>
@@ -498,11 +497,7 @@ function toggleTheme() {
 }
 
 function clearTheme() {
-  // Só remove a classe visual — não apaga a preferência guardada do utilizador
   document.documentElement.classList.remove('vs-light');
-  // Repor botão para escuro (estado padrão antes do login)
-  const navBtn = document.getElementById('themeBtn');
-  if (navBtn) navBtn.textContent = '☀️';
 }
 
 // ═══════════════════════════════════════
@@ -556,8 +551,13 @@ function updateTimerUI() {
 // ACTIVITY LOG
 // ═══════════════════════════════════════
 function addLog(type, msg) {
+  // Guarda em memória para a sessão actual
   state.activityLog.unshift({type, msg, time: new Date().toLocaleTimeString('pt-PT')});
   if (state.activityLog.length > 50) state.activityLog.pop();
+  // Guarda no servidor de forma assíncrona (não bloqueia)
+  if (state.token) {
+    api('POST', '/activity', {action: type||'info', detail: msg}, true).catch(()=>{});
+  }
 }
 
 // ═══════════════════════════════════════
@@ -805,7 +805,7 @@ function switchTab(tab) {
 // ═══════════════════════════════════════
 // ACTIVITY
 // ═══════════════════════════════════════
-function renderActivity() {
+async function renderActivity() {
   const typeCount = {};
   state.items.forEach(it => { typeCount[it.type] = (typeCount[it.type]||0)+1; });
   const icons = {senha:'🔑',nota:'📝',cartao:'💳',identidade:'🪪',crypto:'₿',ssh:'🖥️',ficheiro:'📎'};
@@ -818,17 +818,40 @@ function renderActivity() {
   `;
 
   const ll = document.getElementById('logList');
-  if (!state.activityLog.length) {
-    ll.innerHTML = '<div class="log-item" style="color:var(--text3);font-size:13px">Nenhuma actividade registada</div>';
-    return;
+  ll.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px 0">A carregar histórico...</div>';
+
+  try {
+    const res = await api('GET', '/activity', null, true);
+    const serverLog = res.log || [];
+    const dotClass = {add:'add', del:'del', auth:'auth', info:''};
+    if (!serverLog.length && !state.activityLog.length) {
+      ll.innerHTML = '<div class="log-item" style="color:var(--text3);font-size:13px">Nenhuma actividade registada</div>';
+      return;
+    }
+    // Mostrar log do servidor (histórico completo)
+    ll.innerHTML = serverLog.map(l => {
+      const d = new Date(l.created_at);
+      const timeStr = d.toLocaleString('pt-PT');
+      return `<div class="log-item">
+        <div class="log-dot ${dotClass[l.action]||''}"></div>
+        <span style="color:var(--text2)">${esc(l.detail||l.action)}</span>
+        <span class="log-time">${timeStr}</span>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    // Fallback: mostrar só o log da sessão actual
+    if (!state.activityLog.length) {
+      ll.innerHTML = '<div class="log-item" style="color:var(--text3);font-size:13px">Nenhuma actividade registada</div>';
+      return;
+    }
+    const dotClass = {add:'add', del:'del', auth:'auth'};
+    ll.innerHTML = state.activityLog.map(l => `
+      <div class="log-item">
+        <div class="log-dot ${dotClass[l.type]||''}"></div>
+        <span style="color:var(--text2)">${esc(l.msg)}</span>
+        <span class="log-time">${l.time}</span>
+      </div>`).join('');
   }
-  const dotClass = {add:'add', del:'del', auth:'auth'};
-  ll.innerHTML = state.activityLog.map(l => `
-    <div class="log-item">
-      <div class="log-dot ${dotClass[l.type]||''}"></div>
-      <span style="color:var(--text2)">${esc(l.msg)}</span>
-      <span class="log-time">${l.time}</span>
-    </div>`).join('');
 }
 
 // ═══════════════════════════════════════
@@ -876,7 +899,7 @@ function renderItems() {
       </div>
       <div class="item-preview">${getPreview(it)}</div>
       <div class="item-actions">
-        <button class="ia" onclick="event.stopPropagation();copyMain(${it.id})" title="Copiar">📋 Copiar</button>
+        <button class="ia" onclick="event.stopPropagation();copyMain(${it.id})">📋 Copiar</button>
         <button class="ia" onclick="event.stopPropagation();editItem(${it.id})">✏️ Editar</button>
         <button class="ia del" onclick="event.stopPropagation();deleteItem(${it.id})">🗑</button>
       </div>
@@ -943,22 +966,8 @@ function togglePass(btn) {
 function copyMain(id) {
   const it = state.items.find(i=>i.id===id);
   if (!it) return;
-  let val = '';
-  if (it.type==='senha')      val = it.password || it.username || '';
-  else if (it.type==='nota')  val = it.content || '';
-  else if (it.type==='cartao') val = it.number || '';
-  else if (it.type==='identidade') val = it.docnum || it.fullname || '';
-  else if (it.type==='crypto') val = it.wallet || it.seed || '';
-  else if (it.type==='ssh')   val = it.password || it.host || '';
-  else val = it.password || it.content || it.number || it.seed || it.privateKey || it.wallet || '';
-  if (val) {
-    navigator.clipboard.writeText(val).then(() => toast('Copiado!','ok')).catch(() => {
-      const ta = document.createElement('textarea');
-      ta.value = val; document.body.appendChild(ta); ta.select();
-      document.execCommand('copy'); document.body.removeChild(ta);
-      toast('Copiado!','ok');
-    });
-  } else { toast('Nada para copiar','err'); }
+  const val = it.password||it.content||it.number||it.seed||it.privateKey||it.wallet||'';
+  if (val) { navigator.clipboard.writeText(val); toast('Copiado!','ok'); }
 }
 
 function downloadFile(id) {

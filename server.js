@@ -318,7 +318,7 @@ app.post('/api/auth/resend-otp', otpLimiter, async (req, res) => {
 app.get('/api/items', authMiddleware, async (req, res) => {
   try {
     const [rows] = await pool.execute(
-      'SELECT id, encrypted_content AS encrypted_data, item_type, created_at FROM vault_items WHERE user_id = ? ORDER BY created_at DESC',
+      'SELECT id, encrypted_content, item_type, created_at FROM vault_items WHERE user_id = ? ORDER BY created_at DESC',
       [req.userId]
     );
     res.json({ items: rows });
@@ -331,9 +331,8 @@ app.get('/api/items', authMiddleware, async (req, res) => {
 // POST /api/items — guardar novo item
 app.post('/api/items', authMiddleware,
   async (req, res) => {
-    const encryptedData = req.body.encryptedData || req.body.encrypted_content || req.body.encryptedBlob;
-    const item_type = req.body.item_type || req.body.itemType || 'nota';
-    if (!encryptedData) {
+    const { encryptedData, item_type } = req.body;
+    if (!encryptedData || !item_type) {
       return res.status(400).json({ error: 'Dados do item em falta' });
     }
     try {
@@ -351,9 +350,8 @@ app.post('/api/items', authMiddleware,
 
 // PUT /api/items/:id — editar item
 app.put('/api/items/:id', authMiddleware, async (req, res) => {
-  const encryptedData = req.body.encryptedData || req.body.encrypted_content || req.body.encryptedBlob;
-  const item_type = req.body.item_type || req.body.itemType || 'nota';
-  if (!encryptedData) return res.status(400).json({ error: 'Dados em falta' });
+  const { encryptedData, item_type } = req.body;
+  if (!encryptedData || !item_type) return res.status(400).json({ error: 'Dados em falta' });
   try {
     const [result] = await pool.execute(
       'UPDATE vault_items SET encrypted_content = ?, item_type = ? WHERE id = ? AND user_id = ?',
@@ -479,8 +477,40 @@ app.post('/api/auth/recovery/reset', async (req, res) => {
 });
 
 // ─────────────────────────────────────────
-//  ROTA DE SAÚDE
+//  ROTAS — REGISTO DE ACTIVIDADE
 // ─────────────────────────────────────────
+
+// GET /api/activity — carregar histórico
+app.get('/api/activity', authMiddleware, async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      'SELECT action, detail, created_at FROM audit_log WHERE user_id = ? ORDER BY created_at DESC LIMIT 100',
+      [req.userId]
+    );
+    res.json({ log: rows });
+  } catch (err) {
+    console.error('Activity log error:', err);
+    res.status(500).json({ error: 'Erro ao carregar actividade' });
+  }
+});
+
+// POST /api/activity — guardar entrada no log
+app.post('/api/activity', authMiddleware, async (req, res) => {
+  const { action, detail } = req.body;
+  if (!action) return res.status(400).json({ error: 'Acção em falta' });
+  try {
+    await pool.execute(
+      'INSERT INTO audit_log (user_id, action, detail, ip_address) VALUES (?, ?, ?, ?)',
+      [req.userId, action, detail || '', req.ip]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Activity save error:', err);
+    res.status(500).json({ error: 'Erro ao guardar actividade' });
+  }
+});
+
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '2.0', time: new Date().toISOString() });
 });
