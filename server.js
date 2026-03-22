@@ -487,16 +487,7 @@ app.get('/api/health', (req, res) => {
 //  ARRANQUE
 // ─────────────────────────────────────────
 async function start() {
-  try {
-    const conn = await pool.getConnection();
-    conn.release();
-    console.log('\n\x1b[32m✅ MySQL conectado.\x1b[0m');
-  } catch (err) {
-    console.error('\x1b[31m❌ Erro ao conectar ao MySQL:\x1b[0m', err.message);
-    console.error('   Verifica se o MySQL está a correr e as credenciais no .env');
-    process.exit(1);
-  }
-
+  // Start listening FIRST so Railway health check passes
   app.listen(PORT, () => {
     console.log(`
 \x1b[36m🔐 VelorumSafe Server v2.0\x1b[0m
@@ -508,6 +499,14 @@ async function start() {
 
 \x1b[90m   Ctrl+C para parar\x1b[0m
 `);
+    // Connect to MySQL after server is already listening
+    try {
+      const conn = await pool.getConnection();
+      conn.release();
+      console.log('\n\x1b[32m✅ MySQL conectado.\x1b[0m');
+    } catch (err) {
+      console.error('\x1b[31m❌ Erro ao conectar ao MySQL:\x1b[0m', err.message);
+    }
   });
 }
 
