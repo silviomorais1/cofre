@@ -500,13 +500,15 @@ async function start() {
 \x1b[90m   Ctrl+C para parar\x1b[0m
 `);
     // Connect to MySQL after server is already listening
-    try {
-      const conn = await pool.getConnection();
-      conn.release();
-      console.log('\n\x1b[32m✅ MySQL conectado.\x1b[0m');
-    } catch (err) {
-      console.error('\x1b[31m❌ Erro ao conectar ao MySQL:\x1b[0m', err.message);
-    }
+    (async () => {
+      try {
+        const conn = await pool.getConnection();
+        conn.release();
+        console.log('\n\x1b[32m✅ MySQL conectado.\x1b[0m');
+      } catch (err) {
+        console.error('\x1b[31m❌ Erro ao conectar ao MySQL:\x1b[0m', err.message);
+      }
+    })();
   });
 }
 
