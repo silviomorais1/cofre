@@ -272,9 +272,9 @@ body{background:radial-gradient(ellipse at 20% 0%,rgba(0,100,180,0.12) 0%,transp
       <div class="sub">Faça o seu login aqui</div>
     </div>
     <div class="field">
-      <label>Email</label>
-      <input type="text" id="loginEmail" placeholder="o_teu@email.com" autocomplete="username" oninput="clearFieldState('loginEmail','loginEmailMsg')">
-      <div class="field-msg" id="loginEmailMsg"></div>
+      <label>Nome de utilizador</label>
+      <input type="text" id="loginUsername" placeholder="o_teu_nome" autocomplete="username" oninput="clearFieldState('loginUsername','loginUsernameMsg')">
+      <div class="field-msg" id="loginUsernameMsg"></div>
     </div>
     <div class="field">
       <label>Senha mestre</label>
@@ -657,15 +657,26 @@ async function doRegister() {
   btn.textContent = 'A criar conta...'; btn.disabled = true;
   try {
     const hash = await hashForServer(pass, email);
-    // Hash da resposta para guardar no servidor de forma segura
     const answerHash = await hashForServer(answer, email + ':recovery');
     await api('POST', '/auth/register', {username:name, email, passwordHash:hash, securityQuestion:question, securityAnswerHash:answerHash});
-    toast('Conta criada! Faz login', 'ok');
-    showView('loginView');
+    // Guardar estado para OTP
+    state.pendingEmail = email;
+    state.pendingPass = pass;
+    state.pendingName = name;
+    state.otpContext = 'register';
+    // Enviar OTP
+    await api('POST', '/auth/resend-otp', {email});
+    const otpEmailEl = document.getElementById('otpEmailDisplay');
+    if (otpEmailEl) otpEmailEl.textContent = email;
+    const otpEl = document.getElementById('otpSingle');
+    if (otpEl) otpEl.value = '';
+    showView('otpView');
+    startOTPTimer();
+    toast('Código de verificação enviado para ' + email, 'ok');
   } catch(e) {
     const msg = e.message.toLowerCase();
     toast(msg.includes('exist')||msg.includes('duplicat')||msg.includes('already')
-      ? 'Este email já está registado.'
+      ? 'Este email ou nome já está registado.'
       : e.message, 'err');
   } finally { btn.textContent='Criar conta'; btn.disabled=false; }
 }
@@ -674,46 +685,29 @@ async function doRegister() {
 // LOGIN
 // ═══════════════════════════════════════
 async function doLogin() {
-  const email = document.getElementById('loginEmail').value.trim();
+  const username = document.getElementById('loginUsername').value.trim();
   const pass = document.getElementById('loginPass').value;
   const errBox = document.getElementById('loginErrBox');
   errBox.style.display = 'none';
-  if (!email) { setFieldState('loginEmail','loginEmailMsg','err','Email obrigatório'); return; }
+  if (!username) { setFieldState('loginUsername','loginUsernameMsg','err','Nome de utilizador obrigatório'); return; }
   if (!pass) { setFieldState('loginPass','loginPassMsg','err','Senha obrigatória'); return; }
   const btn = document.getElementById('loginBtn');
   btn.textContent = 'A verificar...'; btn.disabled = true;
   try {
-    const hash = await hashForServer(pass, email);
-    const loginRes = await api('POST', '/auth/login', {email, passwordHash:hash});
-    state.pendingEmail = email; state.pendingPass = pass;
-    state.pendingName = loginRes.username || email.split('@')[0];
-    document.getElementById('otpEmailDisplay').textContent = email;
-    // Limpar campo OTP
-    const otpEl = document.getElementById('otpSingle');
-    if (otpEl) { otpEl.value = ''; }
-    showView('otpView');
-    startOTPTimer();
-    // Enviar OTP via EmailJS
-    try {
-      emailjs.init(EJS.publicKey);
-      await emailjs.send(EJS.serviceId, EJS.templateId, {
-        to_email: email,
-        to_name: state.pendingName,
-        otp_code: loginRes.otp || '------',
-        app_name: 'VelorumSafe'
-      });
-      toast('Código enviado para ' + email, 'ok');
-    } catch(emailErr) {
-      console.error('EmailJS:', emailErr);
-    }
-    setTimeout(() => { const el = document.getElementById('otpSingle'); if(el) el.focus(); }, 100);
+    const loginRes = await api('POST', '/auth/login-username', {username, passwordHash: pass});
+    state.token = loginRes.token;
+    state.user = loginRes.user;
+    state.cryptoKey = await deriveKey(pass, loginRes.user.email);
+    addLog('auth', 'Login bem sucedido');
+    await enterVault();
   } catch(e) {
     const d = e.data || {};
     if (d.blocked) {
-      errBox.innerHTML = `🔒 Bloqueado por <strong>${d.mins||15} min</strong>.`;
+      const mins = d.mins || 2;
+      errBox.innerHTML = `🔒 Conta bloqueada por <strong>${mins} minuto(s)</strong>. Tenta mais tarde.`;
       errBox.style.display = 'block';
       btn.disabled = true;
-      let secs = (d.mins||15)*60;
+      let secs = mins * 60;
       const bl = setInterval(() => {
         secs--; const m=Math.floor(secs/60), s=secs%60;
         btn.textContent = `Bloqueado ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
@@ -721,7 +715,10 @@ async function doLogin() {
       }, 1000);
       return;
     }
-    errBox.textContent = d.remaining ? `Incorreto. ${d.remaining} tentativa(s) restante(s).` : (e.message || 'Email ou senha incorretos.');
+    const remaining = d.remaining;
+    errBox.textContent = remaining
+      ? `Nome ou senha incorretos. ${remaining} tentativa(s) restante(s).`
+      : (e.message || 'Nome de utilizador ou senha incorretos.');
     errBox.style.display = 'block';
     setFieldState('loginPass','loginPassMsg','err','');
   } finally {
@@ -744,10 +741,11 @@ async function doOTP() {
   const code = (document.getElementById('otpSingle').value || '').trim().replace(/\D/g,'');
   if (code.length < 6) return toast('Código incompleto — 6 dígitos','err');
   try {
-    const res = await api('POST', '/auth/verify-otp', {email:state.pendingEmail, otp:code});
+    await api('POST', '/auth/verify-otp', {email:state.pendingEmail, otp:code});
     const ctx = state.otpContext || '';
     state.otpContext = null;
     if (ctx === 'register') {
+      // Após verificar registo — ir para login
       state.pendingEmail = null; state.pendingPass = null;
       toast('Conta verificada! Faz login para entrar.', 'ok');
       showView('loginView');
@@ -755,18 +753,16 @@ async function doOTP() {
     }
     if (ctx === 'recover') { await doRecoverFinal(); return; }
     if (ctx === 'changepass') { await applyPasswordChange(); return; }
-    state.token = res.token; state.user = res.user;
-    state.cryptoKey = await deriveKey(state.pendingPass, state.pendingEmail);
-    state.pendingPass = null;
-    addLog('auth', 'Login bem sucedido');
-    await enterVault();
+    toast('Verificado!', 'ok');
+    showView('loginView');
   } catch(e) { toast(e.message,'err'); }
 }
 
 async function resendOTP() {
+  const email = state.pendingEmail || (state.user && state.user.email);
+  if (!email) return toast('Email não disponível','err');
   try {
-    await api('POST', '/auth/resend-otp', {email:state.pendingEmail});
-    emailjs.init(EJS.publicKey);
+    await api('POST', '/auth/resend-otp', {email});
     toast('Novo código enviado!','ok'); startOTPTimer();
   } catch(e) { toast('Erro ao reenviar','err'); }
 }
@@ -1364,8 +1360,8 @@ function showView(id) {
   document.getElementById(id).classList.add('active');
   document.getElementById('vaultView').classList.remove('active');
   if(id==='loginView'){
-    ['loginEmail','loginPass'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
-    ['loginEmailMsg','loginPassMsg'].forEach(f=>{const el=document.getElementById(f);if(el){el.textContent='';el.className='field-msg';}});
+    ['loginUsername','loginPass'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
+    ['loginUsernameMsg','loginPassMsg'].forEach(f=>{const el=document.getElementById(f);if(el){el.textContent='';el.className='field-msg';}});
     const eb=document.getElementById('loginErrBox');if(eb)eb.style.display='none';
   }
   if(id==='recoverView'){showRecoverStep(1);const el=document.getElementById('recEmail');if(el)el.value='';}
