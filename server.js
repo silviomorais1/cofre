@@ -179,7 +179,7 @@ app.post('/api/auth/register', registerLimiter,
   }
 );
 
-// POST /api/auth/login-username — login directo sem OTP, com bloqueio progressivo
+// POST /api/auth/login-username — login directo com username + senha (sem OTP)
 app.post('/api/auth/login-username', async (req, res) => {
   const { username, passwordHash } = req.body;
   if (!username || !passwordHash) {
@@ -207,8 +207,7 @@ app.post('/api/auth/login-username', async (req, res) => {
     }
 
     const user = rows[0];
-    // Derivar hash da senha usando o mesmo método que o cliente usa no registo
-    // Cliente: hashForServer(pass, email) = PBKDF2(pass, 'server:' + email, 100000, SHA-256)
+    // Derivar hash igual ao cliente: PBKDF2(pass, 'server:'+email, 100000, sha256) -> base64
     const derivedHash = await serverDeriveHash(passwordHash, user.email);
     const valid = await bcrypt.compare(derivedHash, user.password_hash);
 
@@ -222,7 +221,7 @@ app.post('/api/auth/login-username', async (req, res) => {
       return res.status(401).json({ error: 'Nome ou senha incorretos', remaining });
     }
 
-    // Sucesso — limpar bloqueio e actualizar last_login
+    // Sucesso
     await pool.execute('DELETE FROM email_lockouts WHERE email = ?', [lockKey]);
     await pool.execute('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id]);
 
@@ -231,7 +230,6 @@ app.post('/api/auth/login-username', async (req, res) => {
       process.env.JWT_SECRET || 'dev_secret_muda_isto',
       { expiresIn: '60m' }
     );
-
     res.json({ ok: true, token, user: { id: user.id, username: user.username, email: user.email } });
   } catch (err) {
     console.error('Login-username error:', err);
@@ -239,7 +237,7 @@ app.post('/api/auth/login-username', async (req, res) => {
   }
 });
 
-// Deriva o hash da senha no servidor — igual ao que o cliente faz com hashForServer(pass, email)
+// Deriva hash igual ao cliente: hashForServer(pass, email)
 function serverDeriveHash(password, email) {
   return new Promise((resolve, reject) => {
     const crypto = require('crypto');
@@ -251,7 +249,7 @@ function serverDeriveHash(password, email) {
   });
 }
 
-// Helpers bloqueio progressivo: 5 erros→2min, +3→5min, +1→15min
+// Bloqueio progressivo: 5 erros→2min, +3→5min, +1→15min
 async function doIncrementLockout(key) {
   try {
     const [rows] = await pool.execute('SELECT attempts FROM email_lockouts WHERE email = ?', [key]);
@@ -289,7 +287,7 @@ async function doGetLockMins(key) {
   } catch(e) { return 2; }
 }
 
-
+// POST /api/auth/login  — gera e envia OTP
 app.post('/api/auth/login', loginLimiter,
   async (req, res) => {
     const { email, passwordHash } = req.body;
@@ -428,7 +426,7 @@ app.post('/api/auth/resend-otp', otpLimiter, async (req, res) => {
 app.get('/api/items', authMiddleware, async (req, res) => {
   try {
     const [rows] = await pool.execute(
-      'SELECT id, encrypted_content AS encrypted_data, item_type, created_at FROM vault_items WHERE user_id = ? ORDER BY created_at DESC',
+      'SELECT id, encrypted_content, item_type, created_at FROM vault_items WHERE user_id = ? ORDER BY created_at DESC',
       [req.userId]
     );
     res.json({ items: rows });
