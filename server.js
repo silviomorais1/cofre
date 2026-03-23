@@ -428,7 +428,7 @@ app.post('/api/auth/resend-otp', otpLimiter, async (req, res) => {
 app.get('/api/items', authMiddleware, async (req, res) => {
   try {
     const [rows] = await pool.execute(
-      'SELECT id, encrypted_content, item_type, created_at FROM vault_items WHERE user_id = ? ORDER BY created_at DESC',
+      'SELECT id, encrypted_content AS encrypted_data, item_type, created_at FROM vault_items WHERE user_id = ? ORDER BY created_at DESC',
       [req.userId]
     );
     res.json({ items: rows });
